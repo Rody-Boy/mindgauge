@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Short Grit Scale (Grit-S) — MindGauge</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: { extend: { fontFamily: { display: ['Fraunces','serif'], body: ['DM Sans','sans-serif'] } } }
+}
+</script>
+<style>
+  body { font-family: 'DM Sans', sans-serif; }
+  h1,h2,h3 { font-family: 'Fraunces', serif; }
+  .fade-in { animation: fadeIn .6s ease-out; }
+  .slide-up { animation: slideUp .5s ease-out; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  .option-btn { transition: all .2s ease; }
+  .option-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .option-btn.selected { background: #d97706; color: white; border-color: #d97706; }
+  .progress-fill { transition: width .4s cubic-bezier(.4,0,.2,1); }
+  .trait-bar { transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+</style>
+</head>
+<body class="bg-stone-50 text-gray-800 min-h-screen">
+
+<!-- MindGauge Nav -->
+<div class="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b border-stone-200/60" style="backdrop-filter:blur(16px);">
+  <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-900 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+      Back to MindGauge
+    </a>
+    <a href="index.html" class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded-md bg-gray-900 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">MindGauge</span>
+    </a>
+  </div>
+</div>
+<div style="height:48px"></div>
+
+<!-- LANDING -->
+<div id="landing" class="min-h-screen flex items-center justify-center px-6 py-12">
+  <div class="max-w-2xl w-full fade-in">
+    <div class="bg-white shadow-lg rounded-3xl p-10 md:p-14 border border-stone-200/60">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <span class="text-sm font-medium text-amber-600 tracking-wide uppercase">Grit-S Assessment</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-5 leading-tight">Short Grit Scale</h1>
+      <p class="text-gray-500 text-lg leading-relaxed mb-4">
+        Measure your perseverance and passion for long-term goals. Grit reflects sustained effort and consistent interest over time — the stamina to keep going when things get hard.
+      </p>
+      <p class="text-gray-400 text-sm mb-8">
+        8 questions · ~2 minutes · Developed by Angela Duckworth & Patrick Quinn (2009). Two subscales: Consistency of Interest + Perseverance of Effort.
+      </p>
+      <button onclick="startQuiz()" class="bg-amber-600 text-white px-8 py-4 rounded-2xl hover:bg-amber-700 transition font-medium text-lg shadow-lg shadow-amber-200">
+        Begin Assessment →
+      </button>
+    </div>
+    <p class="text-center text-xs text-gray-400 mt-6">For informational and research purposes. Not a clinical diagnostic tool.</p>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="hidden min-h-screen flex items-center justify-center px-6 py-12">
+  <div class="max-w-xl w-full fade-in">
+    <div class="bg-white shadow-lg rounded-3xl p-8 md:p-10 border border-stone-200/60">
+      <div class="flex items-center justify-between mb-2">
+        <span id="progressLabel" class="text-xs font-medium text-gray-400">1 of 8</span>
+        <span id="progressPercent" class="text-xs font-medium text-amber-600">12%</span>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2 mb-8">
+        <div id="progressBar" class="progress-fill bg-amber-500 h-2 rounded-full" style="width:12%"></div>
+      </div>
+      <p id="subscaleLabel" class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3"></p>
+      <h2 id="questionText" class="text-xl md:text-2xl font-bold text-gray-900 mb-8 leading-snug"></h2>
+      <div id="options" class="grid gap-3"></div>
+      <div class="flex justify-between mt-8">
+        <button onclick="prevQuestion()" id="prevBtn" class="text-gray-400 hover:text-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium">← Back</button>
+        <button onclick="nextQuestion()" id="nextBtn" class="bg-amber-600 text-white px-6 py-2.5 rounded-xl hover:bg-amber-700 transition text-sm font-medium shadow-md">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="hidden min-h-screen px-6 py-12">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <div class="text-center mb-4 slide-up">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Your Grit Profile</h2>
+      <p class="text-gray-400">Based on the Short Grit Scale (Grit-S)</p>
+    </div>
+
+    <!-- Score Display -->
+    <div id="scoreSection" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <!-- Subscale Bars -->
+    <div id="subscaleSection" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <!-- Radar -->
+    <div class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up">
+      <h3 class="text-lg font-bold mb-4 text-gray-700">Subscale Comparison</h3>
+      <div class="max-w-sm mx-auto"><canvas id="radarChart"></canvas></div>
+    </div>
+
+    <!-- Interpretation -->
+    <div id="interpretation" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <!-- HR Insights -->
+    <div id="hrInsights" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <p class="text-center text-xs text-gray-400 pb-8">Reference: Duckworth, A.L., & Quinn, P.D. (2009). Journal of Personality Assessment, 91, 166-174.</p>
+  </div>
+</div>
+
+<script>
+/* ===================== GRIT-S DATA ===================== */
+/*
+  Items 1,3,5,6 = Consistency of Interest (CI) — REVERSE scored
+  Items 2,4,7,8 = Perseverance of Effort (PE) — STRAIGHT scored
+  Scale: 1=Not like me at all ... 5=Very much like me
+  For CI items: reverse = 6 - response
+  Total Grit = mean of all 8 scored values
+*/
+
+const questions = [
+  { text: "New ideas and projects sometimes distract me from previous ones.", subscale: "CI", reverse: true },
+  { text: "Setbacks don't discourage me.", subscale: "PE", reverse: false },
+  { text: "I have been obsessed with a certain idea or project for a short time but later lost interest.", subscale: "CI", reverse: true },
+  { text: "I am a hard worker.", subscale: "PE", reverse: false },
+  { text: "I often set a goal but later choose to pursue a different one.", subscale: "CI", reverse: true },
+  { text: "I have difficulty maintaining my focus on projects that take more than a few months to complete.", subscale: "CI", reverse: true },
+  { text: "I finish whatever I begin.", subscale: "PE", reverse: false },
+  { text: "I am diligent.", subscale: "PE", reverse: false }
+];
+
+const likertLabels = [
+  "Not like me at all", "Not much like me", "Somewhat like me", "Mostly like me", "Very much like me"
+];
+
+let current = 0;
+let answers = new Array(8).fill(null);
+
+/* ===================== QUIZ LOGIC ===================== */
+function startQuiz() {
+  document.getElementById("landing").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById("questionText").innerText = `"${q.text}"`;
+  document.getElementById("subscaleLabel").innerText = q.subscale==="CI" ? "Consistency of Interest" : "Perseverance of Effort";
+  const pct = Math.round(((current+1)/8)*100);
+  document.getElementById("progressLabel").innerText = `${current+1} of 8`;
+  document.getElementById("progressPercent").innerText = `${pct}%`;
+  document.getElementById("progressBar").style.width = pct+"%";
+  document.getElementById("prevBtn").style.visibility = current===0?"hidden":"visible";
+  document.getElementById("nextBtn").innerText = current===7?"Calculate Results":"Next →";
+
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  likertLabels.forEach((label,i) => {
+    const val = i+1;
+    const selected = answers[current]===val;
+    const btn = document.createElement("button");
+    btn.className = `option-btn w-full text-left px-5 py-3.5 rounded-2xl border-2 font-medium text-sm ${
+      selected ? "selected" : "border-gray-200 bg-white text-gray-700 hover:border-amber-300"
+    }`;
+    btn.innerHTML = `<span class="inline-flex items-center gap-3"><span class="w-6 h-6 rounded-full border-2 ${
+      selected?"border-white bg-white/20":"border-gray-300"
+    } flex items-center justify-center text-xs font-bold">${selected?"✓":val}</span>${label}</span>`;
+    btn.onclick = () => { answers[current]=val; renderQuestion(); };
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function nextQuestion() {
+  if(answers[current]===null) return;
+  if(current<7) { current++; renderQuestion(); } else { calculateResults(); }
+}
+function prevQuestion() { if(current>0) { current--; renderQuestion(); } }
+
+/* ===================== SCORING ===================== */
+function calculateResults() {
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("results").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+
+  // Score each item
+  const scored = questions.map((q,i) => q.reverse ? (6 - answers[i]) : answers[i]);
+
+  // Total Grit = mean of all 8
+  const totalGrit = scored.reduce((s,v)=>s+v,0) / 8;
+
+  // Consistency of Interest = mean of items 1,3,5,6 (indices 0,2,4,5)
+  const ciItems = [0,2,4,5];
+  const ciScore = ciItems.reduce((s,i)=>s+scored[i],0) / 4;
+
+  // Perseverance of Effort = mean of items 2,4,7,8 (indices 1,3,6,7)
+  const peItems = [1,3,6,7];
+  const peScore = peItems.reduce((s,i)=>s+scored[i],0) / 4;
+
+  renderScore(totalGrit, ciScore, peScore);
+  renderSubscales(ciScore, peScore);
+  renderRadar(totalGrit, ciScore, peScore);
+  renderInterpretation(totalGrit, ciScore, peScore);
+  renderHRInsights(totalGrit, ciScore, peScore);
+}
+
+/* ===================== SCORE DISPLAY ===================== */
+function renderScore(total, ci, pe) {
+  let level, color, bg;
+  if(total>=4) { level="Very Gritty"; color="text-amber-700"; bg="bg-amber-50"; }
+  else if(total>=3.5) { level="Gritty"; color="text-amber-600"; bg="bg-amber-50"; }
+  else if(total>=2.5) { level="Moderate Grit"; color="text-gray-600"; bg="bg-gray-50"; }
+  else { level="Developing Grit"; color="text-red-500"; bg="bg-red-50"; }
+
+  const pctFill = ((total-1)/4)*100;
+
+  document.getElementById("scoreSection").innerHTML = `
+    <div class="text-center">
+      <div class="text-6xl font-bold text-gray-900 mb-2">${total.toFixed(2)}</div>
+      <div class="text-sm text-gray-400 mb-4">out of 5.00</div>
+      <div class="w-full max-w-md mx-auto bg-gray-100 rounded-full h-5 mb-4 overflow-hidden">
+        <div class="bg-amber-500 h-5 rounded-full trait-bar" style="width:0%" data-target="${pctFill}"></div>
+      </div>
+      <span class="inline-block px-4 py-1.5 rounded-full ${bg} ${color} font-semibold text-sm">${level}</span>
+      <div class="mt-4 grid grid-cols-2 gap-4 max-w-sm mx-auto text-center">
+        <div class="p-3 rounded-xl bg-orange-50 border border-orange-200">
+          <div class="text-2xl font-bold text-orange-700">${ci.toFixed(2)}</div>
+          <div class="text-xs text-orange-500">Consistency of Interest</div>
+        </div>
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <div class="text-2xl font-bold text-emerald-700">${pe.toFixed(2)}</div>
+          <div class="text-xs text-emerald-500">Perseverance of Effort</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll(".trait-bar").forEach(bar => { bar.style.width = bar.dataset.target+"%"; });
+    }, 100);
+  });
+}
+
+/* ===================== SUBSCALE BARS ===================== */
+function renderSubscales(ci, pe) {
+  const scales = [
+    { name: "Consistency of Interest", score: ci, color: "bg-orange-500", desc: "Maintaining focus on the same goals and interests over time" },
+    { name: "Perseverance of Effort", score: pe, color: "bg-emerald-500", desc: "Working hard and not giving up despite setbacks" }
+  ];
+
+  let html = `<h3 class="text-lg font-bold mb-6 text-gray-700">Subscale Breakdown</h3>`;
+  scales.forEach(s => {
+    const pct = ((s.score-1)/4)*100;
+    html += `
+      <div class="mb-5">
+        <div class="flex justify-between mb-1"><span class="text-sm font-semibold text-gray-700">${s.name}</span><span class="text-sm font-bold">${s.score.toFixed(2)}/5</span></div>
+        <p class="text-xs text-gray-400 mb-2">${s.desc}</p>
+        <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
+          <div class="${s.color} h-4 rounded-full trait-bar" style="width:0%" data-target="${pct}"></div>
+        </div>
+      </div>`;
+  });
+  document.getElementById("subscaleSection").innerHTML = html;
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll("#subscaleSection .trait-bar").forEach(bar => { bar.style.width = bar.dataset.target+"%"; });
+    }, 200);
+  });
+}
+
+/* ===================== RADAR ===================== */
+function renderRadar(total, ci, pe) {
+  new Chart(document.getElementById("radarChart"), {
+    type: 'radar',
+    data: {
+      labels: ["Overall Grit", "Consistency of Interest", "Perseverance of Effort"],
+      datasets: [{
+        label: "Score",
+        data: [total, ci, pe],
+        backgroundColor: "rgba(217,119,6,0.15)",
+        borderColor: "rgba(217,119,6,0.8)",
+        borderWidth: 2.5,
+        pointBackgroundColor: ["#d97706","#ea580c","#059669"],
+        pointBorderColor: "#fff", pointBorderWidth: 2, pointRadius: 6, fill: true
+      }]
+    },
+    options: {
+      responsive: true, animation: {duration:1200},
+      scales: { r: { beginAtZero: true, max: 5, ticks: {stepSize:1}, pointLabels: {font:{size:12}} } },
+      plugins: { legend: {display:false} }
+    }
+  });
+}
+
+/* ===================== INTERPRETATION ===================== */
+function renderInterpretation(total, ci, pe) {
+  let totalDesc;
+  if(total>=4) totalDesc = "You demonstrate strong perseverance and consistent passion for your long-term goals. You sustain interest and effort over extended periods, even in the face of setbacks and distractions.";
+  else if(total>=3) totalDesc = "You show a moderate level of grit. You generally persist toward your goals but may occasionally shift focus or feel discouraged by obstacles.";
+  else totalDesc = "You may find it challenging to maintain long-term focus on goals or sustain effort through setbacks. Grit can be developed through deliberate practice, finding purpose, and building supportive habits.";
+
+  let ciDesc = ci >= pe
+    ? "Your consistency of interest is relatively strong — you tend to maintain passion for the same goals over time."
+    : "Your consistency of interest is lower than your effort — you work hard but may shift goals more frequently.";
+
+  let peDesc = pe >= ci
+    ? "Your perseverance of effort is relatively strong — you push through difficulties and work diligently."
+    : "Your perseverance of effort is lower than your interest consistency — you maintain goals but may ease off on effort during setbacks.";
+
+  document.getElementById("interpretation").innerHTML = `
+    <h3 class="text-lg font-bold mb-4 text-gray-700">Interpretation</h3>
+    <div class="space-y-4">
+      <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+        <p class="font-semibold text-amber-700 mb-2">Overall Grit: ${total.toFixed(2)}/5</p>
+        <p class="text-sm text-gray-600">${totalDesc}</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-orange-50 border border-orange-200">
+        <p class="font-semibold text-orange-700 mb-2">Consistency of Interest: ${ci.toFixed(2)}/5</p>
+        <p class="text-sm text-gray-600">${ciDesc}</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+        <p class="font-semibold text-emerald-700 mb-2">Perseverance of Effort: ${pe.toFixed(2)}/5</p>
+        <p class="text-sm text-gray-600">${peDesc}</p>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== HR INSIGHTS ===================== */
+function renderHRInsights(total, ci, pe) {
+  const insights = [];
+  if(total>=3.5) {
+    insights.push({title:"Long-Term Projects",desc:"Well suited for roles requiring sustained focus: R&D, strategy, complex engineering, or leadership positions."});
+    insights.push({title:"Retention Signal",desc:"Higher grit is associated with lower voluntary turnover and career stability."});
+  } else {
+    insights.push({title:"Role Fit",desc:"May thrive in roles with variety, short project cycles, and frequent novelty. Consider sprint-based work."});
+    insights.push({title:"Development Path",desc:"Grit can be cultivated through purpose-finding, deliberate practice, and growth mindset training."});
+  }
+  if(ci<pe) insights.push({title:"Goal Alignment",desc:"Strong effort but shifting interests — help this person find deep alignment between role and personal passion."});
+  if(pe<ci) insights.push({title:"Resilience Building",desc:"Stable interests but lower effort through obstacles — coaching on persistence strategies may help."});
+
+  document.getElementById("hrInsights").innerHTML = `
+    <h3 class="text-lg font-bold mb-4 text-gray-700">HR & Workplace Implications</h3>
+    <div class="grid gap-3">
+      ${insights.map(i => `<div class="p-3 rounded-xl bg-gray-50 border border-gray-200">
+        <p class="font-semibold text-gray-700 text-sm">${i.title}</p>
+        <p class="text-xs text-gray-500 mt-1">${i.desc}</p>
+      </div>`).join("")}
+    </div>
+    <p class="text-xs text-gray-400 mt-4">Note: Research on the incremental predictive validity of grit beyond conscientiousness is mixed (Credé et al., 2017). Best used alongside other assessments.</p>
+  `;
+}
+</script>
+</body>
+</html>

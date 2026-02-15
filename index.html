@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="MindGauge: Free, validated psychological assessments for HR. IPIP-NEO-120, Big Five, Self-Efficacy, Grit, and Work Engagement scales with proper psychometric scoring, interactive dashboards, and norm-referenced percentiles." />
+<meta name="theme-color" content="#24231f" />
+<title>MindGauge — Free Validated Psych Assessments for HR</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { display: ['Fraunces','serif'], body: ['DM Sans','sans-serif'] },
+      colors: {
+        ink: { 50:'#f8f7f4', 100:'#efeee8', 200:'#dddbd0', 300:'#c4c1b2', 400:'#a8a490', 500:'#8d8872', 600:'#73705e', 700:'#5c594d', 800:'#4d4b42', 900:'#43413a', 950:'#24231f' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  :root {
+    --color-n: #ef4444; --color-e: #a855f7; --color-o: #3b82f6;
+    --color-a: #f59e0b; --color-c: #22c55e; --color-gse: #0d9488;
+    --color-grit: #d97706; --color-uwes: #2563eb;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: #faf9f6; color: #24231f; overflow-x: hidden; }
+  h1,h2,h3,h4 { font-family: 'Fraunces', serif; }
+
+  /* Grain overlay */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Scroll reveal */
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* Card hover */
+  .assessment-card {
+    transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease;
+  }
+  .assessment-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 48px -12px rgba(0,0,0,0.12);
+  }
+  .assessment-card .card-arrow {
+    transition: transform 0.3s ease; opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .assessment-card:hover .card-arrow {
+    transform: translateX(6px); opacity: 1;
+  }
+  .assessment-card .card-icon {
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  }
+  .assessment-card:hover .card-icon {
+    transform: scale(1.1) rotate(-3deg);
+  }
+
+  /* Feature card */
+  .feature-card { transition: background 0.3s ease; }
+  .feature-card:hover { background: #f0efeb; }
+
+  /* FAQ */
+  .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.16,1,0.3,1), padding 0.3s ease; padding-top: 0; padding-bottom: 0; }
+  .faq-answer.open { max-height: 300px; padding-top: 12px; padding-bottom: 16px; }
+  .faq-chevron { transition: transform 0.3s ease; }
+  .faq-chevron.open { transform: rotate(180deg); }
+
+  /* Stat counter */
+  .stat-number { font-variant-numeric: tabular-nums; }
+
+  /* Hero gradient */
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(168,85,247,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 30%, rgba(59,130,246,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 50% 80%, rgba(245,158,11,0.05) 0%, transparent 60%);
+  }
+
+  /* Nav blur */
+  .nav-blur {
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+
+  /* Badge pulse */
+  @keyframes pulse-soft { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .badge-pulse { animation: pulse-soft 3s ease-in-out infinite; }
+
+  /* Mobile menu */
+  .mobile-menu { transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+  .mobile-menu.open { transform: translateY(0); }
+
+  /* Dark mode */
+  .dark body, body.dark { background: #1a1917; color: #e8e6df; }
+  body.dark .nav-blur { background: rgba(26,25,23,0.85); }
+  body.dark .bg-white { background: #24231f !important; }
+  body.dark .bg-stone-50, body.dark .bg-ink-50 { background: #1e1d1a !important; }
+  body.dark .text-gray-900, body.dark .text-ink-950 { color: #e8e6df !important; }
+  body.dark .text-gray-600, body.dark .text-ink-600 { color: #a8a490 !important; }
+  body.dark .text-gray-500, body.dark .text-ink-500 { color: #8d8872 !important; }
+  body.dark .text-gray-400, body.dark .text-ink-400 { color: #73705e !important; }
+  body.dark .border-stone-200, body.dark .border-ink-200 { border-color: #3a3831 !important; }
+  body.dark .assessment-card { background: #2a2923 !important; border-color: #3a3831 !important; }
+  body.dark .feature-card:hover { background: #2a2923 !important; }
+  body.dark .hero-gradient {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(168,85,247,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 30%, rgba(59,130,246,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 50% 80%, rgba(245,158,11,0.04) 0%, transparent 60%);
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== NAVIGATION ==================== -->
+<nav class="nav-blur fixed top-0 left-0 right-0 z-50 bg-white/70 border-b border-stone-200/60">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-ink-950 flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0-18 0"/><path d="M12 12l4-4"/><path d="M12 8v-2"/></svg>
+      </div>
+      <span class="font-display font-bold text-lg text-ink-950">MindGauge</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium text-ink-500">
+      <a href="#assessments" class="hover:text-ink-950 transition">Assessments</a>
+      <a href="#features" class="hover:text-ink-950 transition">Features</a>
+      <a href="#how-it-works" class="hover:text-ink-950 transition">How It Works</a>
+      <a href="#faq" class="hover:text-ink-950 transition">FAQ</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="toggleDark()" id="darkToggle" class="w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400 hover:text-ink-950 hover:border-ink-400 transition" title="Toggle dark mode">
+        <svg id="sunIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="moonIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <button onclick="toggleMobileMenu()" class="md:hidden w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <a href="#assessments" class="hidden md:inline-flex bg-ink-950 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-ink-800 transition shadow-sm">
+        Get Started
+      </a>
+    </div>
+  </div>
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="mobile-menu md:hidden absolute top-16 left-0 right-0 bg-white border-b border-stone-200 p-6 space-y-4 text-center">
+    <a href="#assessments" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">Assessments</a>
+    <a href="#features" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">Features</a>
+    <a href="#how-it-works" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">How It Works</a>
+    <a href="#faq" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">FAQ</a>
+  </div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero-gradient pt-32 pb-20 md:pt-40 md:pb-28 px-6">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-stone-200 shadow-sm mb-8">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 badge-pulse"></span>
+        <span class="text-xs font-medium text-ink-500">100% Free · Open Source · No Sign-up Required</span>
+      </div>
+    </div>
+    <h1 class="reveal reveal-delay-1 text-5xl md:text-7xl font-display font-900 text-ink-950 leading-[1.05] mb-6 tracking-tight">
+      Measure What<br>Matters <span class="italic text-ink-400">Most</span>
+    </h1>
+    <p class="reveal reveal-delay-2 text-lg md:text-xl text-ink-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+      Five scientifically validated, public-domain psychological instruments — built with proper scoring, norm-referenced percentiles, and beautiful interactive dashboards. Ready to use in your browser.
+    </p>
+    <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="#assessments" class="bg-ink-950 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-ink-800 transition shadow-lg shadow-ink-950/10 inline-flex items-center gap-2">
+        Browse Assessments
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+      </a>
+      <a href="#how-it-works" class="text-ink-500 px-8 py-4 rounded-2xl font-medium text-lg hover:text-ink-950 transition inline-flex items-center gap-2">
+        How It Works
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STATS BAR ==================== -->
+<section class="border-y border-stone-200 bg-white py-8 px-6">
+  <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+    <div class="reveal">
+      <div class="stat-number text-3xl md:text-4xl font-display font-bold text-ink-950" data-target="5">0</div>
+      <div class="text-xs text-ink-400 mt-1 font-medium uppercase tracking-wider">Assessments</div>
+    </div>
+    <div class="reveal reveal-delay-1">
+      <div class="stat-number text-3xl md:text-4xl font-display font-bold text-ink-950" data-target="197">0</div>
+      <div class="text-xs text-ink-400 mt-1 font-medium uppercase tracking-wider">Total Items</div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="stat-number text-3xl md:text-4xl font-display font-bold text-ink-950" data-target="43">0</div>
+      <div class="text-xs text-ink-400 mt-1 font-medium uppercase tracking-wider">Scales & Facets</div>
+    </div>
+    <div class="reveal reveal-delay-3">
+      <div class="stat-number text-3xl md:text-4xl font-display font-bold text-ink-950" data-target="0">0</div>
+      <div class="text-xs text-ink-400 mt-1 font-medium uppercase tracking-wider">Cost ($)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ASSESSMENTS ==================== -->
+<section id="assessments" class="py-20 md:py-28 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="reveal text-4xl md:text-5xl font-display font-bold text-ink-950 mb-4">Choose Your Assessment</h2>
+      <p class="reveal reveal-delay-1 text-ink-500 text-lg max-w-xl mx-auto">Each instrument is validated, properly scored, and produces an interactive results dashboard with percentile-referenced insights.</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="reveal reveal-delay-2 flex flex-wrap justify-center gap-2 mb-12" id="filterTabs">
+      <button onclick="filterCards('all')" class="filter-tab active px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-ink-950 text-white transition">All</button>
+      <button onclick="filterCards('personality')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Personality</button>
+      <button onclick="filterCards('motivation')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Motivation & Grit</button>
+      <button onclick="filterCards('engagement')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Engagement</button>
+    </div>
+
+    <!-- Assessment Cards Grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="cardsGrid">
+
+      <!-- Card 1: IPIP-NEO-120 -->
+      <a href="ipip-neo-120-assessment.html" class="assessment-card block bg-white rounded-3xl border border-stone-200/60 p-8 relative overflow-hidden group" data-category="personality" >
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background:var(--color-o)"></div>
+        <div class="card-icon w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:rgba(79,70,229,0.1)">
+          <svg class="w-7 h-7" style="color:#4f46e5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-wider">Comprehensive</span>
+          <span class="px-2 py-0.5 rounded-md bg-stone-100 text-ink-400 text-[10px] font-bold uppercase tracking-wider">120 Items</span>
+        </div>
+        <h3 class="text-xl font-display font-bold text-ink-950 mb-2">IPIP-NEO-120</h3>
+        <p class="text-sm text-ink-500 leading-relaxed mb-5">Full Five Factor Model with 5 domains and 30 facets. The most detailed personality portrait available in a free instrument.</p>
+        <div class="flex flex-wrap gap-1.5 mb-5">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:rgba(239,68,68,0.1);color:#ef4444">Neuroticism</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:rgba(168,85,247,0.1);color:#a855f7">Extraversion</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:rgba(59,130,246,0.1);color:#3b82f6">Openness</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:rgba(245,158,11,0.1);color:#d97706">Agreeableness</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" style="background:rgba(34,197,94,0.1);color:#16a34a">Conscientiousness</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-ink-400">~15 min · Johnson (2014)</span>
+          <span class="card-arrow text-indigo-600 font-medium text-sm flex items-center gap-1">Take Test <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 2: Big Five IPIP-50 -->
+      <a href="big5-ipip50-assessment.html" class="assessment-card block bg-white rounded-3xl border border-stone-200/60 p-8 relative overflow-hidden group" data-category="personality">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background:var(--color-e)"></div>
+        <div class="card-icon w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:rgba(168,85,247,0.1)">
+          <svg class="w-7 h-7" style="color:#a855f7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 text-[10px] font-bold uppercase tracking-wider">Quick</span>
+          <span class="px-2 py-0.5 rounded-md bg-stone-100 text-ink-400 text-[10px] font-bold uppercase tracking-wider">50 Items</span>
+        </div>
+        <h3 class="text-xl font-display font-bold text-ink-950 mb-2">Big Five (IPIP-50)</h3>
+        <p class="text-sm text-ink-500 leading-relaxed mb-5">The classic OCEAN personality test. Five domains with reverse-keyed scoring, Z-scores, and population-normed percentiles.</p>
+        <div class="flex flex-wrap gap-1.5 mb-5">
+          <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 text-[10px] font-medium">OCEAN Model</span>
+          <span class="px-2 py-0.5 rounded-full bg-stone-100 text-ink-500 text-[10px] font-medium">Radar Chart</span>
+          <span class="px-2 py-0.5 rounded-full bg-stone-100 text-ink-500 text-[10px] font-medium">Career Match</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-ink-400">~8 min · Goldberg (1992)</span>
+          <span class="card-arrow text-purple-600 font-medium text-sm flex items-center gap-1">Take Test <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 3: GSE -->
+      <a href="gse-assessment.html" class="assessment-card block bg-white rounded-3xl border border-stone-200/60 p-8 relative overflow-hidden group" data-category="motivation">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background:var(--color-gse)"></div>
+        <div class="card-icon w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:rgba(13,148,136,0.1)">
+          <svg class="w-7 h-7" style="color:#0d9488" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded-md bg-teal-50 text-teal-600 text-[10px] font-bold uppercase tracking-wider">Quick</span>
+          <span class="px-2 py-0.5 rounded-md bg-stone-100 text-ink-400 text-[10px] font-bold uppercase tracking-wider">10 Items</span>
+        </div>
+        <h3 class="text-xl font-display font-bold text-ink-950 mb-2">General Self-Efficacy</h3>
+        <p class="text-sm text-ink-500 leading-relaxed mb-5">Measures your belief in your ability to handle challenges and adversity. Normed against 19,719 respondents from 25 countries.</p>
+        <div class="flex flex-wrap gap-1.5 mb-5">
+          <span class="px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 text-[10px] font-medium">Resilience</span>
+          <span class="px-2 py-0.5 rounded-full bg-stone-100 text-ink-500 text-[10px] font-medium">Coping</span>
+          <span class="px-2 py-0.5 rounded-full bg-stone-100 text-ink-500 text-[10px] font-medium">Confidence</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-ink-400">~2 min · Schwarzer (1995)</span>
+          <span class="card-arrow text-teal-600 font-medium text-sm flex items-center gap-1">Take Test <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 4: Grit-S -->
+      <a href="grit-s-assessment.html" class="assessment-card block bg-white rounded-3xl border border-stone-200/60 p-8 relative overflow-hidden group" data-category="motivation">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background:var(--color-grit)"></div>
+        <div class="card-icon w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:rgba(217,119,6,0.1)">
+          <svg class="w-7 h-7" style="color:#d97706" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 text-[10px] font-bold uppercase tracking-wider">Quick</span>
+          <span class="px-2 py-0.5 rounded-md bg-stone-100 text-ink-400 text-[10px] font-bold uppercase tracking-wider">8 Items</span>
+        </div>
+        <h3 class="text-xl font-display font-bold text-ink-950 mb-2">Short Grit Scale</h3>
+        <p class="text-sm text-ink-500 leading-relaxed mb-5">Measures perseverance and passion for long-term goals. Two subscales: Consistency of Interest and Perseverance of Effort.</p>
+        <div class="flex flex-wrap gap-1.5 mb-5">
+          <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-medium">Perseverance</span>
+          <span class="px-2 py-0.5 rounded-full bg-stone-100 text-ink-500 text-[10px] font-medium">Passion</span>
+          <span class="px-2 py-0.5 rounded-full bg-stone-100 text-ink-500 text-[10px] font-medium">Stamina</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-ink-400">~2 min · Duckworth (2009)</span>
+          <span class="card-arrow text-amber-600 font-medium text-sm flex items-center gap-1">Take Test <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 5: UWES-9 -->
+      <a href="uwes9-assessment.html" class="assessment-card block bg-white rounded-3xl border border-stone-200/60 p-8 relative overflow-hidden group" data-category="engagement">
+        <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-10" style="background:var(--color-uwes)"></div>
+        <div class="card-icon w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:rgba(37,99,235,0.1)">
+          <svg class="w-7 h-7" style="color:#2563eb" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider">Workplace</span>
+          <span class="px-2 py-0.5 rounded-md bg-stone-100 text-ink-400 text-[10px] font-bold uppercase tracking-wider">9 Items</span>
+        </div>
+        <h3 class="text-xl font-display font-bold text-ink-950 mb-2">Work Engagement (UWES-9)</h3>
+        <p class="text-sm text-ink-500 leading-relaxed mb-5">Measures three dimensions of work engagement: Vigor, Dedication, and Absorption. Based on the JD-R model of occupational wellbeing.</p>
+        <div class="flex flex-wrap gap-1.5 mb-5">
+          <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-medium">Vigor</span>
+          <span class="px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-medium">Dedication</span>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-medium">Absorption</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-ink-400">~2 min · Schaufeli (2006)</span>
+          <span class="card-arrow text-blue-600 font-medium text-sm flex items-center gap-1">Take Test <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </a>
+
+      <!-- Card 6: Run All -->
+      <div class="assessment-card bg-ink-950 rounded-3xl border border-ink-800 p-8 relative overflow-hidden flex flex-col justify-between cursor-default">
+        <div>
+          <div class="card-icon w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
+            <svg class="w-7 h-7 text-white/80" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          </div>
+          <h3 class="text-xl font-display font-bold text-white mb-2">Full Battery</h3>
+          <p class="text-sm text-white/50 leading-relaxed mb-6">Run all 5 assessments in sequence for a complete candidate profile. Takes approximately 30 minutes total.</p>
+        </div>
+        <div class="text-xs text-white/30 font-medium">Coming Soon — Multi-test runner & combined PDF report</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FEATURES ==================== -->
+<section id="features" class="py-20 md:py-28 px-6 bg-white border-y border-stone-200">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="reveal text-4xl md:text-5xl font-display font-bold text-ink-950 mb-4">Built Properly</h2>
+      <p class="reveal reveal-delay-1 text-ink-500 text-lg max-w-lg mx-auto">Not another quiz generator. These are psychometrically correct implementations of validated instruments.</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="feature-card reveal p-6 rounded-2xl">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center mb-4 text-lg">🔬</div>
+        <h4 class="font-display font-bold text-ink-950 mb-2">Reverse-Key Scoring</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Negatively-worded items are properly flipped (6 - response) so your personality isn't accidentally inverted.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1 p-6 rounded-2xl">
+        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4 text-lg">📊</div>
+        <h4 class="font-display font-bold text-ink-950 mb-2">Z-Score Percentiles</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Raw scores are compared to population norms via Z-score transformation and normal CDF, giving real percentiles.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2 p-6 rounded-2xl">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center mb-4 text-lg">🏛️</div>
+        <h4 class="font-display font-bold text-ink-950 mb-2">Public Domain</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Every instrument is either public domain (IPIP) or freely available for research use. No licensing fees, no paywalls.</p>
+      </div>
+      <div class="feature-card reveal p-6 rounded-2xl">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center mb-4 text-lg">📱</div>
+        <h4 class="font-display font-bold text-ink-950 mb-2">Fully Responsive</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Every assessment works perfectly on mobile, tablet, and desktop. One-question-at-a-time UI prevents overwhelm.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-1 p-6 rounded-2xl">
+        <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center mb-4 text-lg">🎨</div>
+        <h4 class="font-display font-bold text-ink-950 mb-2">Interactive Dashboards</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Animated radar charts, horizontal bars, gauge visualizations, and color-coded facet breakdowns using Chart.js.</p>
+      </div>
+      <div class="feature-card reveal reveal-delay-2 p-6 rounded-2xl">
+        <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center mb-4 text-lg">🔒</div>
+        <h4 class="font-display font-bold text-ink-950 mb-2">100% Client-Side</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">All scoring runs in your browser. No data is sent to any server. Zero tracking, zero cookies, complete privacy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== HOW IT WORKS ==================== -->
+<section id="how-it-works" class="py-20 md:py-28 px-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16">
+      <h2 class="reveal text-4xl md:text-5xl font-display font-bold text-ink-950 mb-4">How It Works</h2>
+      <p class="reveal reveal-delay-1 text-ink-500 text-lg">Three steps. No sign-up. No download.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="reveal text-center">
+        <div class="w-16 h-16 rounded-2xl bg-ink-950 flex items-center justify-center mx-auto mb-5">
+          <span class="text-white font-display font-bold text-2xl">1</span>
+        </div>
+        <h4 class="font-display font-bold text-ink-950 mb-2 text-lg">Choose a Test</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Pick the assessment that matches your need — from a 2-minute screener to a 15-minute deep-dive.</p>
+      </div>
+      <div class="reveal reveal-delay-1 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-ink-950 flex items-center justify-center mx-auto mb-5">
+          <span class="text-white font-display font-bold text-2xl">2</span>
+        </div>
+        <h4 class="font-display font-bold text-ink-950 mb-2 text-lg">Answer Honestly</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Respond to each statement on a Likert scale. There are no right or wrong answers — just be yourself.</p>
+      </div>
+      <div class="reveal reveal-delay-2 text-center">
+        <div class="w-16 h-16 rounded-2xl bg-ink-950 flex items-center justify-center mx-auto mb-5">
+          <span class="text-white font-display font-bold text-2xl">3</span>
+        </div>
+        <h4 class="font-display font-bold text-ink-950 mb-2 text-lg">Get Your Profile</h4>
+        <p class="text-sm text-ink-500 leading-relaxed">Instantly receive an interactive dashboard with percentile scores, interpretive text, and career insights.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COMPARISON TABLE ==================== -->
+<section class="py-16 px-6 bg-white border-y border-stone-200">
+  <div class="max-w-5xl mx-auto">
+    <h2 class="reveal text-3xl font-display font-bold text-ink-950 mb-8 text-center">Assessment Comparison</h2>
+    <div class="reveal reveal-delay-1 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-xs text-ink-400 uppercase tracking-wider border-b border-stone-200">
+            <th class="py-3 text-left font-medium">Assessment</th>
+            <th class="py-3 text-center font-medium">Items</th>
+            <th class="py-3 text-center font-medium">Time</th>
+            <th class="py-3 text-center font-medium">Scales</th>
+            <th class="py-3 text-center font-medium">Scoring</th>
+            <th class="py-3 text-center font-medium">Best For</th>
+          </tr>
+        </thead>
+        <tbody class="text-ink-600">
+          <tr class="border-b border-stone-100"><td class="py-3 font-semibold text-ink-950">IPIP-NEO-120</td><td class="py-3 text-center">120</td><td class="py-3 text-center">15 min</td><td class="py-3 text-center">35</td><td class="py-3 text-center">Z-score %ile</td><td class="py-3 text-center">Deep personality profiling</td></tr>
+          <tr class="border-b border-stone-100"><td class="py-3 font-semibold text-ink-950">Big Five (IPIP-50)</td><td class="py-3 text-center">50</td><td class="py-3 text-center">8 min</td><td class="py-3 text-center">5</td><td class="py-3 text-center">Z-score %ile</td><td class="py-3 text-center">Quick personality screen</td></tr>
+          <tr class="border-b border-stone-100"><td class="py-3 font-semibold text-ink-950">GSE</td><td class="py-3 text-center">10</td><td class="py-3 text-center">2 min</td><td class="py-3 text-center">1</td><td class="py-3 text-center">Z-score %ile</td><td class="py-3 text-center">Resilience & confidence</td></tr>
+          <tr class="border-b border-stone-100"><td class="py-3 font-semibold text-ink-950">Grit-S</td><td class="py-3 text-center">8</td><td class="py-3 text-center">2 min</td><td class="py-3 text-center">3</td><td class="py-3 text-center">Mean (1-5)</td><td class="py-3 text-center">Persistence & motivation</td></tr>
+          <tr><td class="py-3 font-semibold text-ink-950">UWES-9</td><td class="py-3 text-center">9</td><td class="py-3 text-center">2 min</td><td class="py-3 text-center">4</td><td class="py-3 text-center">Mean (0-6)</td><td class="py-3 text-center">Employee engagement</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section id="faq" class="py-20 md:py-28 px-6">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="reveal text-4xl md:text-5xl font-display font-bold text-ink-950 mb-12 text-center">Frequently Asked</h2>
+    <div class="space-y-3" id="faqContainer">
+      <div class="reveal faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+          <span class="font-display font-bold text-ink-950">Are these tests scientifically validated?</span>
+          <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">Yes. Each instrument has been published in peer-reviewed journals with established reliability (Cronbach's alpha) and validity. The IPIP-50 and IPIP-NEO-120 are based on Goldberg (1992) and Johnson (2014), the GSE on Schwarzer & Jerusalem (1995), the Grit-S on Duckworth & Quinn (2009), and the UWES-9 on Schaufeli, Bakker & Salanova (2006).</div>
+      </div>
+      <div class="reveal reveal-delay-1 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+          <span class="font-display font-bold text-ink-950">Can I use these for hiring decisions?</span>
+          <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">These assessments can inform HR decisions as part of a broader evaluation process, but should never be the sole basis for hiring or rejection. Personality assessments are best used for team-building, development planning, and self-awareness. Always consult legal guidance regarding employment testing in your jurisdiction.</div>
+      </div>
+      <div class="reveal reveal-delay-2 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+          <span class="font-display font-bold text-ink-950">Is my data stored anywhere?</span>
+          <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">No. All computation happens entirely in your browser using JavaScript. No data is transmitted to any server, no cookies are set, and nothing is stored. When you close the page, your responses are gone. You can save your results by taking a screenshot or printing the page.</div>
+      </div>
+      <div class="reveal reveal-delay-3 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+          <span class="font-display font-bold text-ink-950">What does "public domain" mean?</span>
+          <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">The IPIP items are fully public domain — free for any use without licensing fees. The GSE, Grit-S, and UWES-9 are freely available for research and non-commercial use, but may have licensing nuances for commercial deployment. Always check the original authors' terms if using commercially.</div>
+      </div>
+      <div class="reveal reveal-delay-4 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+          <span class="font-display font-bold text-ink-950">How accurate are the percentile scores?</span>
+          <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">Percentiles are computed using published population means and standard deviations, transformed via Z-score and normal CDF approximation. They represent approximate standing relative to the general population. For clinical-grade precision, a licensed psychologist with local norms would be recommended.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CTA ==================== -->
+<section class="py-20 px-6 bg-ink-950 text-white">
+  <div class="max-w-3xl mx-auto text-center">
+    <h2 class="reveal text-4xl md:text-5xl font-display font-bold mb-6">Ready to begin?</h2>
+    <p class="reveal reveal-delay-1 text-white/50 text-lg mb-10 max-w-lg mx-auto">Start with the 2-minute GSE for a quick confidence check, or dive deep with the 120-item IPIP-NEO for a full personality map.</p>
+    <div class="reveal reveal-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="gse-assessment.html" class="bg-white text-ink-950 px-8 py-4 rounded-2xl font-medium text-lg hover:bg-ink-100 transition shadow-lg">Quick Start (2 min)</a>
+      <a href="ipip-neo-120-assessment.html" class="border border-white/20 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-white/10 transition">Full Assessment (15 min)</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="py-12 px-6 border-t border-stone-200 bg-white">
+  <div class="max-w-5xl mx-auto">
+    <div class="grid md:grid-cols-4 gap-8 mb-10">
+      <div>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-7 h-7 rounded-md bg-ink-950 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <span class="font-display font-bold text-ink-950">MindGauge</span>
+        </div>
+        <p class="text-xs text-ink-400 leading-relaxed">Free, validated psychological assessments for HR professionals. Precision measurement meets beautiful design.</p>
+      </div>
+      <div>
+        <h4 class="font-display font-bold text-ink-950 mb-3 text-sm">Assessments</h4>
+        <div class="space-y-2 text-sm text-ink-500">
+          <a href="ipip-neo-120-assessment.html" class="block hover:text-ink-950 transition">IPIP-NEO-120</a>
+          <a href="big5-ipip50-assessment.html" class="block hover:text-ink-950 transition">Big Five (IPIP-50)</a>
+          <a href="gse-assessment.html" class="block hover:text-ink-950 transition">Self-Efficacy (GSE)</a>
+          <a href="grit-s-assessment.html" class="block hover:text-ink-950 transition">Grit Scale (Grit-S)</a>
+          <a href="uwes9-assessment.html" class="block hover:text-ink-950 transition">Work Engagement (UWES-9)</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-display font-bold text-ink-950 mb-3 text-sm">References</h4>
+        <div class="space-y-2 text-xs text-ink-400 leading-relaxed">
+          <p>Goldberg, L.R. (1992). Psychological Assessment, 4, 26-42.</p>
+          <p>Johnson, J.A. (2014). J. Research in Personality, 51, 78-89.</p>
+          <p>Schwarzer, R. & Jerusalem, M. (1995). NFER-NELSON.</p>
+          <p>Duckworth, A.L. & Quinn, P.D. (2009). JPSP, 91, 166-174.</p>
+          <p>Schaufeli, W.B. et al. (2006). EPM, 66, 701-716.</p>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-display font-bold text-ink-950 mb-3 text-sm">Legal</h4>
+        <div class="space-y-2 text-xs text-ink-400 leading-relaxed">
+          <p>For informational and educational purposes only.</p>
+          <p>Not a substitute for professional psychological assessment.</p>
+          <p>No data collected. No cookies. No tracking.</p>
+          <p>All computations run client-side in your browser.</p>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-stone-200 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <p class="text-xs text-ink-400">MindGauge — Built with validated psychometric instruments from the public domain.</p>
+      <div class="flex items-center gap-4 text-xs text-ink-400">
+        <span>Tailwind CSS</span>
+        <span>·</span>
+        <span>Chart.js</span>
+        <span>·</span>
+        <span>Zero Dependencies</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script>
+/* ===== Scroll Reveal ===== */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Animate stat counters
+      if(entry.target.querySelector('.stat-number')) {
+        animateCounters();
+      }
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ===== Stat Counter Animation ===== */
+let countersAnimated = false;
+function animateCounters() {
+  if(countersAnimated) return;
+  countersAnimated = true;
+  document.querySelectorAll('.stat-number').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    const duration = 1500;
+    const start = performance.now();
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(target * eased);
+      if(progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  });
+}
+
+/* ===== Filter Tabs ===== */
+function filterCards(category) {
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.classList.remove('bg-ink-950','text-white');
+    tab.classList.add('bg-white','text-ink-600');
+  });
+  event.target.classList.remove('bg-white','text-ink-600');
+  event.target.classList.add('bg-ink-950','text-white');
+
+  document.querySelectorAll('.assessment-card').forEach(card => {
+    const cat = card.dataset.category;
+    if(category === 'all' || cat === category || !cat) {
+      card.style.display = '';
+      card.style.opacity = '1';
+      card.style.transform = '';
+    } else {
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.95)';
+      setTimeout(() => { card.style.display = 'none'; }, 300);
+    }
+  });
+}
+
+/* ===== FAQ Toggle ===== */
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const chevron = btn.querySelector('.faq-chevron');
+  const isOpen = answer.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.faq-chevron').forEach(c => c.classList.remove('open'));
+
+  if(!isOpen) {
+    answer.classList.add('open');
+    chevron.classList.add('open');
+  }
+}
+
+/* ===== Dark Mode ===== */
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  document.getElementById('sunIcon').classList.toggle('hidden', isDark);
+  document.getElementById('moonIcon').classList.toggle('hidden', !isDark);
+  localStorage.setItem('darkMode', isDark);
+}
+
+// Restore dark mode preference
+if(localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark');
+  document.getElementById('sunIcon').classList.add('hidden');
+  document.getElementById('moonIcon').classList.remove('hidden');
+}
+
+/* ===== Mobile Menu ===== */
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+/* ===== Nav scroll effect ===== */
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  if(window.scrollY > 20) {
+    nav.classList.add('shadow-sm');
+  } else {
+    nav.classList.remove('shadow-sm');
+  }
+});
+</script>
+</body>
+</html>

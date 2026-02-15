@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IPIP-NEO-120 Personality — MindGauge</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: { extend: { fontFamily: { display: ['Fraunces','serif'], body: ['DM Sans','sans-serif'] } } }
+}
+</script>
+<style>
+  body { font-family: 'DM Sans', sans-serif; }
+  h1,h2,h3 { font-family: 'Fraunces', serif; }
+  .fade-in { animation: fadeIn .6s ease-out; }
+  .slide-up { animation: slideUp .5s ease-out; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  .option-btn { transition: all .15s ease; }
+  .option-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+  .option-btn.selected { background: #4f46e5; color: white; border-color: #4f46e5; }
+  .progress-fill { transition: width .3s cubic-bezier(.4,0,.2,1); }
+  .trait-bar { transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+  .facet-bar { transition: width 1s cubic-bezier(.4,0,.2,1); }
+</style>
+</head>
+<body class="bg-stone-50 text-gray-800 min-h-screen">
+
+<!-- MindGauge Nav -->
+<div class="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b border-stone-200/60" style="backdrop-filter:blur(16px);">
+  <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-900 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+      Back to MindGauge
+    </a>
+    <a href="index.html" class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded-md bg-gray-900 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">MindGauge</span>
+    </a>
+  </div>
+</div>
+<div style="height:48px"></div>
+
+<!-- LANDING -->
+<div id="landing" class="min-h-screen flex items-center justify-center px-6 py-12">
+  <div class="max-w-2xl w-full fade-in">
+    <div class="bg-white shadow-lg rounded-3xl p-10 md:p-14 border border-stone-200/60">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <span class="text-sm font-medium text-indigo-600 tracking-wide uppercase">IPIP-NEO-120</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-5 leading-tight">Comprehensive Personality Assessment</h1>
+      <p class="text-gray-500 text-lg leading-relaxed mb-4">
+        The IPIP-NEO-120 measures 5 broad personality domains and 30 specific facets of the Five Factor Model — providing a detailed map of your personality.
+      </p>
+      <p class="text-gray-400 text-sm mb-3">120 questions · ~15 minutes · Public domain instrument (Johnson, 2014)</p>
+      <div class="text-xs text-gray-400 mb-8 grid grid-cols-5 gap-2">
+        <span class="px-2 py-1 rounded-lg bg-red-50 text-red-500 text-center font-medium">Neuroticism</span>
+        <span class="px-2 py-1 rounded-lg bg-purple-50 text-purple-500 text-center font-medium">Extraversion</span>
+        <span class="px-2 py-1 rounded-lg bg-blue-50 text-blue-500 text-center font-medium">Openness</span>
+        <span class="px-2 py-1 rounded-lg bg-amber-50 text-amber-600 text-center font-medium">Agreeableness</span>
+        <span class="px-2 py-1 rounded-lg bg-green-50 text-green-600 text-center font-medium">Conscientiousness</span>
+      </div>
+      <button onclick="startQuiz()" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl hover:bg-indigo-700 transition font-medium text-lg shadow-lg shadow-indigo-200">
+        Begin Assessment →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="hidden min-h-screen flex items-center justify-center px-6 py-8">
+  <div class="max-w-xl w-full fade-in">
+    <div class="bg-white shadow-lg rounded-3xl p-8 md:p-10 border border-stone-200/60">
+      <div class="flex items-center justify-between mb-2">
+        <span id="progressLabel" class="text-xs font-medium text-gray-400"></span>
+        <span id="progressPercent" class="text-xs font-medium text-indigo-600"></span>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2 mb-6">
+        <div id="progressBar" class="progress-fill bg-indigo-600 h-2 rounded-full" style="width:1%"></div>
+      </div>
+      <p id="domainLabel" class="text-xs font-medium uppercase tracking-wider mb-1" style="color:#4f46e5"></p>
+      <p id="facetLabel" class="text-[10px] text-gray-400 mb-4"></p>
+      <h2 id="questionText" class="text-lg md:text-xl font-bold text-gray-900 mb-6 leading-snug"></h2>
+      <div id="options" class="grid grid-cols-5 gap-2"></div>
+      <div class="flex justify-between mt-6">
+        <button onclick="prevQ()" id="prevBtn" class="text-gray-400 hover:text-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium">← Back</button>
+        <button onclick="nextQ()" id="nextBtn" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition text-sm font-medium shadow-md">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="hidden min-h-screen px-6 py-12">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <div class="text-center mb-4 slide-up">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Your IPIP-NEO-120 Profile</h2>
+      <p class="text-gray-400">5 Domains · 30 Facets · Percentile-referenced scores</p>
+    </div>
+    <div class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up">
+      <h3 class="text-lg font-bold mb-4 text-gray-700">Domain Overview</h3>
+      <div class="max-w-lg mx-auto"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div id="domainBars" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+    <div id="facetDetails" class="space-y-6"></div>
+    <div id="careerMatch" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+    <p class="text-center text-xs text-gray-400 pb-8">Johnson, J. A. (2014). IPIP-NEO-120. Journal of Research in Personality, 51, 78-89. Public domain.</p>
+  </div>
+</div>
+
+<script>
+/* ===================================================================
+   IPIP-NEO-120 ITEMS
+   5 Domains × 6 Facets × 4 Items = 120 items
+   Each item: { text, domain, facet, key: +/- }
+   Scale: 1=Very Inaccurate ... 5=Very Accurate
+   For - keyed items: scored value = 6 - response
+   =================================================================== */
+
+const items = [
+// ---- NEUROTICISM ----
+// N1: Anxiety
+{t:"Worry about things.",d:"N",f:"N1",k:"+"},
+{t:"Fear for the worst.",d:"N",f:"N1",k:"+"},
+{t:"Am afraid of many things.",d:"N",f:"N1",k:"+"},
+{t:"Get stressed out easily.",d:"N",f:"N1",k:"+"},
+// N2: Anger
+{t:"Get angry easily.",d:"N",f:"N2",k:"+"},
+{t:"Get irritated easily.",d:"N",f:"N2",k:"+"},
+{t:"Lose my temper.",d:"N",f:"N2",k:"+"},
+{t:"Am not easily annoyed.",d:"N",f:"N2",k:"-"},
+// N3: Depression
+{t:"Often feel blue.",d:"N",f:"N3",k:"+"},
+{t:"Dislike myself.",d:"N",f:"N3",k:"+"},
+{t:"Am often down in the dumps.",d:"N",f:"N3",k:"+"},
+{t:"Feel comfortable with myself.",d:"N",f:"N3",k:"-"},
+// N4: Self-Consciousness
+{t:"Find it difficult to approach others.",d:"N",f:"N4",k:"+"},
+{t:"Am afraid to draw attention to myself.",d:"N",f:"N4",k:"+"},
+{t:"Only feel comfortable with friends.",d:"N",f:"N4",k:"+"},
+{t:"Am not bothered by difficult social situations.",d:"N",f:"N4",k:"-"},
+// N5: Immoderation
+{t:"Go on binges.",d:"N",f:"N5",k:"+"},
+{t:"Rarely overindulge.",d:"N",f:"N5",k:"-"},
+{t:"Easily resist temptations.",d:"N",f:"N5",k:"-"},
+{t:"Am able to control my cravings.",d:"N",f:"N5",k:"-"},
+// N6: Vulnerability
+{t:"Panic easily.",d:"N",f:"N6",k:"+"},
+{t:"Become overwhelmed by events.",d:"N",f:"N6",k:"+"},
+{t:"Feel that I'm unable to deal with things.",d:"N",f:"N6",k:"+"},
+{t:"Remain calm under pressure.",d:"N",f:"N6",k:"-"},
+
+// ---- EXTRAVERSION ----
+// E1: Friendliness
+{t:"Make friends easily.",d:"E",f:"E1",k:"+"},
+{t:"Feel comfortable around people.",d:"E",f:"E1",k:"+"},
+{t:"Avoid contacts with others.",d:"E",f:"E1",k:"-"},
+{t:"Keep others at a distance.",d:"E",f:"E1",k:"-"},
+// E2: Gregariousness
+{t:"Love large parties.",d:"E",f:"E2",k:"+"},
+{t:"Talk to a lot of different people at parties.",d:"E",f:"E2",k:"+"},
+{t:"Prefer to be alone.",d:"E",f:"E2",k:"-"},
+{t:"Avoid crowds.",d:"E",f:"E2",k:"-"},
+// E3: Assertiveness
+{t:"Take charge.",d:"E",f:"E3",k:"+"},
+{t:"Try to lead others.",d:"E",f:"E3",k:"+"},
+{t:"Take control of things.",d:"E",f:"E3",k:"+"},
+{t:"Wait for others to lead the way.",d:"E",f:"E3",k:"-"},
+// E4: Activity Level
+{t:"Am always busy.",d:"E",f:"E4",k:"+"},
+{t:"Am always on the go.",d:"E",f:"E4",k:"+"},
+{t:"Do a lot in my spare time.",d:"E",f:"E4",k:"+"},
+{t:"Like to take it easy.",d:"E",f:"E4",k:"-"},
+// E5: Excitement-Seeking
+{t:"Love excitement.",d:"E",f:"E5",k:"+"},
+{t:"Seek adventure.",d:"E",f:"E5",k:"+"},
+{t:"Enjoy being reckless.",d:"E",f:"E5",k:"+"},
+{t:"Act wild and crazy.",d:"E",f:"E5",k:"+"},
+// E6: Cheerfulness
+{t:"Radiate joy.",d:"E",f:"E6",k:"+"},
+{t:"Have a lot of fun.",d:"E",f:"E6",k:"+"},
+{t:"Love life.",d:"E",f:"E6",k:"+"},
+{t:"Look at the bright side of life.",d:"E",f:"E6",k:"+"},
+
+// ---- OPENNESS ----
+// O1: Imagination
+{t:"Have a vivid imagination.",d:"O",f:"O1",k:"+"},
+{t:"Enjoy wild flights of fantasy.",d:"O",f:"O1",k:"+"},
+{t:"Love to daydream.",d:"O",f:"O1",k:"+"},
+{t:"Like to get lost in thought.",d:"O",f:"O1",k:"+"},
+// O2: Artistic Interests
+{t:"Believe in the importance of art.",d:"O",f:"O2",k:"+"},
+{t:"See beauty in things that others might not notice.",d:"O",f:"O2",k:"+"},
+{t:"Do not like poetry.",d:"O",f:"O2",k:"-"},
+{t:"Do not enjoy going to art museums.",d:"O",f:"O2",k:"-"},
+// O3: Emotionality
+{t:"Experience my emotions intensely.",d:"O",f:"O3",k:"+"},
+{t:"Feel others' emotions.",d:"O",f:"O3",k:"+"},
+{t:"Rarely notice my emotional reactions.",d:"O",f:"O3",k:"-"},
+{t:"Don't understand people who get emotional.",d:"O",f:"O3",k:"-"},
+// O4: Adventurousness
+{t:"Prefer variety to routine.",d:"O",f:"O4",k:"+"},
+{t:"Prefer to stick with things that I know.",d:"O",f:"O4",k:"-"},
+{t:"Dislike changes.",d:"O",f:"O4",k:"-"},
+{t:"Am attached to conventional ways.",d:"O",f:"O4",k:"-"},
+// O5: Intellect
+{t:"Love to read challenging material.",d:"O",f:"O5",k:"+"},
+{t:"Avoid philosophical discussions.",d:"O",f:"O5",k:"-"},
+{t:"Have difficulty understanding abstract ideas.",d:"O",f:"O5",k:"-"},
+{t:"Am not interested in theoretical discussions.",d:"O",f:"O5",k:"-"},
+// O6: Liberalism
+{t:"Tend to vote for liberal political candidates.",d:"O",f:"O6",k:"+"},
+{t:"Believe that there is no absolute right and wrong.",d:"O",f:"O6",k:"+"},
+{t:"Tend to vote for conservative political candidates.",d:"O",f:"O6",k:"-"},
+{t:"Believe that we should be tough on crime.",d:"O",f:"O6",k:"-"},
+
+// ---- AGREEABLENESS ----
+// A1: Trust
+{t:"Trust others.",d:"A",f:"A1",k:"+"},
+{t:"Believe that others have good intentions.",d:"A",f:"A1",k:"+"},
+{t:"Trust what people say.",d:"A",f:"A1",k:"+"},
+{t:"Distrust people.",d:"A",f:"A1",k:"-"},
+// A2: Morality
+{t:"Use others for my own ends.",d:"A",f:"A2",k:"-"},
+{t:"Cheat to get ahead.",d:"A",f:"A2",k:"-"},
+{t:"Take advantage of others.",d:"A",f:"A2",k:"-"},
+{t:"Obstruct others' plans.",d:"A",f:"A2",k:"-"},
+// A3: Altruism
+{t:"Am concerned about others.",d:"A",f:"A3",k:"+"},
+{t:"Love to help others.",d:"A",f:"A3",k:"+"},
+{t:"Am indifferent to the feelings of others.",d:"A",f:"A3",k:"-"},
+{t:"Take no time for others.",d:"A",f:"A3",k:"-"},
+// A4: Cooperation
+{t:"Love a good fight.",d:"A",f:"A4",k:"-"},
+{t:"Yell at people.",d:"A",f:"A4",k:"-"},
+{t:"Insult people.",d:"A",f:"A4",k:"-"},
+{t:"Get back at others.",d:"A",f:"A4",k:"-"},
+// A5: Modesty
+{t:"Believe that I am better than others.",d:"A",f:"A5",k:"-"},
+{t:"Think highly of myself.",d:"A",f:"A5",k:"-"},
+{t:"Have a high opinion of myself.",d:"A",f:"A5",k:"-"},
+{t:"Boast about my virtues.",d:"A",f:"A5",k:"-"},
+// A6: Sympathy
+{t:"Sympathize with the homeless.",d:"A",f:"A6",k:"+"},
+{t:"Feel sympathy for those who are worse off than myself.",d:"A",f:"A6",k:"+"},
+{t:"Am not interested in other people's problems.",d:"A",f:"A6",k:"-"},
+{t:"Try not to think about the needy.",d:"A",f:"A6",k:"-"},
+
+// ---- CONSCIENTIOUSNESS ----
+// C1: Self-Efficacy
+{t:"Complete tasks successfully.",d:"C",f:"C1",k:"+"},
+{t:"Excel in what I do.",d:"C",f:"C1",k:"+"},
+{t:"Handle tasks smoothly.",d:"C",f:"C1",k:"+"},
+{t:"Know how to get things done.",d:"C",f:"C1",k:"+"},
+// C2: Orderliness
+{t:"Like to tidy up.",d:"C",f:"C2",k:"+"},
+{t:"Often forget to put things back in their proper place.",d:"C",f:"C2",k:"-"},
+{t:"Leave a mess in my room.",d:"C",f:"C2",k:"-"},
+{t:"Leave my belongings around.",d:"C",f:"C2",k:"-"},
+// C3: Dutifulness
+{t:"Keep my promises.",d:"C",f:"C3",k:"+"},
+{t:"Tell the truth.",d:"C",f:"C3",k:"+"},
+{t:"Break rules.",d:"C",f:"C3",k:"-"},
+{t:"Break my promises.",d:"C",f:"C3",k:"-"},
+// C4: Achievement-Striving
+{t:"Do more than what's expected of me.",d:"C",f:"C4",k:"+"},
+{t:"Work hard.",d:"C",f:"C4",k:"+"},
+{t:"Put little time and effort into my work.",d:"C",f:"C4",k:"-"},
+{t:"Do just enough work to get by.",d:"C",f:"C4",k:"-"},
+// C5: Self-Discipline
+{t:"Am always prepared.",d:"C",f:"C5",k:"+"},
+{t:"Carry out my plans.",d:"C",f:"C5",k:"+"},
+{t:"Waste my time.",d:"C",f:"C5",k:"-"},
+{t:"Have difficulty starting tasks.",d:"C",f:"C5",k:"-"},
+// C6: Cautiousness
+{t:"Jump into things without thinking.",d:"C",f:"C6",k:"-"},
+{t:"Make rash decisions.",d:"C",f:"C6",k:"-"},
+{t:"Rush into things.",d:"C",f:"C6",k:"-"},
+{t:"Act without thinking.",d:"C",f:"C6",k:"-"}
+];
+
+/* Randomize item order but keep track of original index */
+let itemOrder = items.map((_,i)=>i);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;}
+shuffle(itemOrder);
+
+const TOTAL = 120;
+const likertLabels = ["Very Inaccurate","Inaccurate","Neutral","Accurate","Very Accurate"];
+const shortLabels = ["VI","I","N","A","VA"];
+
+let current = 0;
+let answers = new Array(TOTAL).fill(null); // indexed by ORIGINAL item index
+
+const domainMeta = {
+  N: {name:"Neuroticism",color:"#ef4444",bg:"bg-red-50",text:"text-red-700",border:"border-red-200",barBg:"bg-red-500"},
+  E: {name:"Extraversion",color:"#a855f7",bg:"bg-purple-50",text:"text-purple-700",border:"border-purple-200",barBg:"bg-purple-500"},
+  O: {name:"Openness",color:"#3b82f6",bg:"bg-blue-50",text:"text-blue-700",border:"border-blue-200",barBg:"bg-blue-500"},
+  A: {name:"Agreeableness",color:"#f59e0b",bg:"bg-amber-50",text:"text-amber-700",border:"border-amber-200",barBg:"bg-amber-500"},
+  C: {name:"Conscientiousness",color:"#22c55e",bg:"bg-green-50",text:"text-green-700",border:"border-green-200",barBg:"bg-green-500"}
+};
+
+const facetNames = {
+  N1:"Anxiety",N2:"Anger",N3:"Depression",N4:"Self-Consciousness",N5:"Immoderation",N6:"Vulnerability",
+  E1:"Friendliness",E2:"Gregariousness",E3:"Assertiveness",E4:"Activity Level",E5:"Excitement-Seeking",E6:"Cheerfulness",
+  O1:"Imagination",O2:"Artistic Interests",O3:"Emotionality",O4:"Adventurousness",O5:"Intellect",O6:"Liberalism",
+  A1:"Trust",A2:"Morality",A3:"Altruism",A4:"Cooperation",A5:"Modesty",A6:"Sympathy",
+  C1:"Self-Efficacy",C2:"Orderliness",C3:"Dutifulness",C4:"Achievement-Striving",C5:"Self-Discipline",C6:"Cautiousness"
+};
+
+/* Approximate norms (based on Johnson 2014 large Internet samples) */
+const domainNorms = {
+  N:{mean:72,sd:16}, E:{mean:78,sd:14}, O:{mean:76,sd:12}, A:{mean:84,sd:13}, C:{mean:78,sd:15}
+};
+
+/* ===================== QUIZ LOGIC ===================== */
+function startQuiz(){
+  document.getElementById("landing").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  renderQ();
+}
+
+function renderQ(){
+  const origIdx = itemOrder[current];
+  const item = items[origIdx];
+  const dm = domainMeta[item.d];
+
+  document.getElementById("questionText").innerText = `"${item.t}"`;
+  document.getElementById("domainLabel").innerText = dm.name;
+  document.getElementById("domainLabel").style.color = dm.color;
+  document.getElementById("facetLabel").innerText = facetNames[item.f];
+
+  const pct = Math.round(((current+1)/TOTAL)*100);
+  document.getElementById("progressLabel").innerText = `${current+1} of ${TOTAL}`;
+  document.getElementById("progressPercent").innerText = `${pct}%`;
+  document.getElementById("progressBar").style.width = pct+"%";
+  document.getElementById("prevBtn").style.visibility = current===0?"hidden":"visible";
+  document.getElementById("nextBtn").innerText = current===TOTAL-1?"Calculate Results":"Next →";
+
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  likertLabels.forEach((label,i) => {
+    const val = i+1;
+    const sel = answers[origIdx]===val;
+    const btn = document.createElement("button");
+    btn.className = `option-btn flex flex-col items-center px-2 py-3 rounded-xl border-2 text-xs font-medium ${
+      sel?"selected":"border-gray-200 bg-white text-gray-600 hover:border-indigo-300"
+    }`;
+    btn.innerHTML = `<span class="text-base font-bold mb-1">${sel?"✓":val}</span><span class="${sel?'text-indigo-100':''}">${shortLabels[i]}</span>`;
+    btn.title = label;
+    btn.onclick = () => { answers[origIdx]=val; if(current<TOTAL-1){current++;renderQ();}else{renderQ();} };
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function nextQ(){
+  const origIdx = itemOrder[current];
+  if(answers[origIdx]===null) return;
+  if(current<TOTAL-1){current++;renderQ();} else {calculateResults();}
+}
+function prevQ(){ if(current>0){current--;renderQ();} }
+
+/* ===================== MATH ===================== */
+function erf(x){
+  const sign=x>=0?1:-1;x=Math.abs(x);
+  const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;
+  const t=1/(1+p*x);
+  return sign*(1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x));
+}
+function zToP(z){return Math.min(99,Math.max(1,Math.round((.5*(1+erf(z/Math.sqrt(2))))*100)));}
+
+/* ===================== SCORING ===================== */
+function calculateResults(){
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("results").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+
+  // Score each item
+  const scored = items.map((item,i)=> item.k==="+" ? answers[i] : (6-answers[i]));
+
+  // Facet scores (sum of 4 items, range 4-20)
+  const facetScores = {};
+  const facetItems = {};
+  items.forEach((item,i)=>{
+    if(!facetItems[item.f]) facetItems[item.f]=[];
+    facetItems[item.f].push(i);
+  });
+  for(let f in facetItems){
+    facetScores[f] = facetItems[f].reduce((s,i)=>s+scored[i],0);
+  }
+
+  // Domain scores (sum of 6 facets = sum of 24 items, range 24-120)
+  const domainScores = {};
+  const domainOrder = ["N","E","O","A","C"];
+  domainOrder.forEach(d => {
+    let total = 0;
+    for(let j=1;j<=6;j++) total += facetScores[d+j];
+    domainScores[d] = total;
+  });
+
+  // Domain percentiles
+  const domainPercentiles = {};
+  domainOrder.forEach(d => {
+    const z = (domainScores[d] - domainNorms[d].mean) / domainNorms[d].sd;
+    domainPercentiles[d] = zToP(z);
+  });
+
+  // Facet percentiles (approximate: facet range 4-20, mean~12, sd~3.2)
+  const facetPercentiles = {};
+  for(let f in facetScores){
+    const z = (facetScores[f]-12)/3.2;
+    facetPercentiles[f] = zToP(z);
+  }
+
+  renderRadar(domainPercentiles);
+  renderDomainBars(domainPercentiles, domainScores);
+  renderFacetDetails(domainPercentiles, facetScores, facetPercentiles);
+  renderCareer(domainPercentiles);
+}
+
+/* ===================== RADAR ===================== */
+function renderRadar(pcts){
+  const order=["O","C","E","A","N"];
+  new Chart(document.getElementById("radarChart"),{
+    type:'radar',
+    data:{
+      labels:order.map(d=>domainMeta[d].name),
+      datasets:[{
+        label:"Percentile",data:order.map(d=>pcts[d]),
+        backgroundColor:"rgba(79,70,229,0.12)",borderColor:"rgba(79,70,229,0.8)",borderWidth:2.5,
+        pointBackgroundColor:order.map(d=>domainMeta[d].color),
+        pointBorderColor:"#fff",pointBorderWidth:2,pointRadius:6,fill:true
+      }]
+    },
+    options:{
+      responsive:true,animation:{duration:1200},
+      scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:25},pointLabels:{font:{size:13,weight:'500'}},grid:{color:"rgba(0,0,0,.06)"}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}th percentile`}}}
+    }
+  });
+}
+
+/* ===================== DOMAIN BARS ===================== */
+function renderDomainBars(pcts, raw){
+  const order=["N","E","O","A","C"];
+  let html=`<h3 class="text-lg font-bold mb-6 text-gray-700">Domain Percentiles</h3>`;
+  order.forEach(d=>{
+    const m=domainMeta[d]; const p=pcts[d];
+    html+=`<div class="mb-5">
+      <div class="flex justify-between mb-1"><span class="text-sm font-semibold ${m.text}">${m.name}</span>
+      <span class="text-sm font-bold text-gray-600">${p}<sup class="text-[10px]">th</sup> <span class="font-normal text-gray-400">(raw: ${raw[d]})</span></span></div>
+      <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden"><div class="${m.barBg} h-4 rounded-full trait-bar" style="width:0%" data-target="${p}"></div></div>
+    </div>`;
+  });
+  document.getElementById("domainBars").innerHTML=html;
+  setTimeout(()=>{document.querySelectorAll("#domainBars .trait-bar").forEach(b=>{b.style.width=b.dataset.target+"%";});},150);
+}
+
+/* ===================== FACET DETAILS ===================== */
+function renderFacetDetails(domPcts, facetScores, facetPcts){
+  const order=["N","E","O","A","C"];
+  const container = document.getElementById("facetDetails");
+  container.innerHTML = "";
+
+  order.forEach(d=>{
+    const m=domainMeta[d];
+    let html=`<div class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up">
+      <h3 class="text-lg font-bold mb-1 ${m.text}">${m.name} <span class="text-gray-400 font-normal text-sm">(${domPcts[d]}th percentile)</span></h3>
+      <p class="text-xs text-gray-400 mb-5">6 facets · 4 items each</p>`;
+
+    for(let j=1;j<=6;j++){
+      const f=d+j; const p=facetPcts[f]; const raw=facetScores[f];
+      let lvl,lc;
+      if(p>=67){lvl="High";lc=m.text;} else if(p>=34){lvl="Moderate";lc="text-gray-500";} else{lvl="Low";lc="text-gray-400";}
+      html+=`<div class="mb-3">
+        <div class="flex justify-between mb-1">
+          <span class="text-xs font-semibold text-gray-700">${facetNames[f]}</span>
+          <span class="text-xs ${lc} font-medium">${lvl} (${p}th, raw ${raw}/20)</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+          <div class="${m.barBg} h-2.5 rounded-full facet-bar" style="width:0%;opacity:0.75" data-target="${p}"></div>
+        </div>
+      </div>`;
+    }
+    html+=`</div>`;
+    container.innerHTML += html;
+  });
+
+  setTimeout(()=>{document.querySelectorAll(".facet-bar").forEach(b=>{b.style.width=b.dataset.target+"%";});},300);
+}
+
+/* ===================== CAREER ===================== */
+function renderCareer(pcts){
+  const sorted=Object.entries(pcts).sort((a,b)=>b[1]-a[1]);
+  // For career, skip N if it's top (high N isn't a "strength")
+  const strengths = sorted.filter(([d])=>d!=="N").slice(0,2).map(([d])=>d);
+  const careerMap={
+    E:["Sales Director","Recruiter","Event Manager","PR Specialist"],
+    A:["HR Business Partner","Counselor","Social Worker","Customer Success Manager"],
+    C:["Operations Manager","Financial Controller","Software Engineer","Project Manager"],
+    O:["UX Researcher","Innovation Lead","Data Scientist","Creative Director"],
+    N:["Risk Analyst","Compliance Officer","Quality Auditor","Safety Inspector"]
+  };
+  const careers=[...new Set([...careerMap[strengths[0]].slice(0,2),...careerMap[strengths[1]].slice(0,2)])].slice(0,4);
+  const m0=domainMeta[strengths[0]],m1=domainMeta[strengths[1]];
+
+  document.getElementById("careerMatch").innerHTML=`
+    <h3 class="text-lg font-bold mb-4 text-gray-700">Career Alignment</h3>
+    <p class="text-sm text-gray-500 mb-4">Based on your strongest domains — <span class="font-semibold ${m0.text}">${m0.name}</span> and <span class="font-semibold ${m1.text}">${m1.name}</span>:</p>
+    <div class="grid grid-cols-2 gap-3">
+      ${careers.map(c=>`<div class="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium text-gray-700">${c}</div>`).join("")}
+    </div>
+    <p class="text-xs text-gray-400 mt-4">Career suggestions are illustrative. Consider facet-level scores for more nuanced matching.</p>`;
+}
+</script>
+</body>
+</html>

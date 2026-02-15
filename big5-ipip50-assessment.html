@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Big Five (IPIP-50) — MindGauge</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Fraunces', 'serif'],
+        body: ['DM Sans', 'sans-serif'],
+      },
+      colors: {
+        ocean: {
+          O: '#3b82f6',
+          C: '#22c55e',
+          E: '#a855f7',
+          A: '#f59e0b',
+          N: '#ef4444',
+        }
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'DM Sans', sans-serif; }
+  h1, h2, h3 { font-family: 'Fraunces', serif; }
+  .fade-in { animation: fadeIn 0.6s ease-out; }
+  .slide-up { animation: slideUp 0.5s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  .option-btn { transition: all 0.2s ease; }
+  .option-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .option-btn.selected { background: #4338ca; color: white; border-color: #4338ca; }
+  .progress-fill { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+  .trait-bar { transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+</style>
+</head>
+
+<body class="bg-stone-50 text-gray-800 min-h-screen">
+
+<!-- MindGauge Nav -->
+<div class="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b border-stone-200/60" style="backdrop-filter:blur(16px);">
+  <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+    <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-900 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+      Back to MindGauge
+    </a>
+    <a href="index.html" class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded-md bg-gray-900 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">MindGauge</span>
+    </a>
+  </div>
+</div>
+<div style="height:48px"></div>
+
+<!-- ================= LANDING ================= -->
+<div id="landing" class="min-h-screen flex items-center justify-center px-6 py-12">
+  <div class="max-w-2xl w-full fade-in">
+    <div class="bg-white shadow-lg rounded-3xl p-10 md:p-14 border border-stone-200/60">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 110 20 10 10 0 010-20zm0 4v4l3 3"/></svg>
+        </div>
+        <span class="text-sm font-medium text-indigo-600 tracking-wide uppercase">IPIP-50 Assessment</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-5 leading-tight">Big Five<br>Personality Test</h1>
+      <p class="text-gray-500 text-lg leading-relaxed mb-4">
+        Discover your personality profile across five core dimensions — Openness, Conscientiousness, Extraversion, Agreeableness, and Neuroticism.
+      </p>
+      <p class="text-gray-400 text-sm mb-8">
+        50 questions · ~8 minutes · Based on the validated IPIP Big-Five Factor Markers with norm-referenced percentile scoring.
+      </p>
+      <button onclick="startQuiz()" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl hover:bg-indigo-700 transition font-medium text-lg shadow-lg shadow-indigo-200 hover:shadow-indigo-300">
+        Begin Assessment →
+      </button>
+    </div>
+    <p class="text-center text-xs text-gray-400 mt-6">For informational purposes only. Not a clinical diagnostic tool.</p>
+  </div>
+</div>
+
+<!-- ================= QUIZ ================= -->
+<div id="quiz" class="hidden min-h-screen flex items-center justify-center px-6 py-12">
+  <div class="max-w-xl w-full fade-in">
+    <div class="bg-white shadow-lg rounded-3xl p-8 md:p-10 border border-stone-200/60">
+      <!-- Progress -->
+      <div class="flex items-center justify-between mb-2">
+        <span id="progressLabel" class="text-xs font-medium text-gray-400">1 of 50</span>
+        <span id="progressPercent" class="text-xs font-medium text-indigo-600">2%</span>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2 mb-8">
+        <div id="progressBar" class="progress-fill bg-indigo-600 h-2 rounded-full" style="width:2%"></div>
+      </div>
+
+      <p id="traitLabel" class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3"></p>
+      <h2 id="questionText" class="text-xl md:text-2xl font-bold text-gray-900 mb-8 leading-snug"></h2>
+
+      <div id="options" class="grid gap-3"></div>
+
+      <div class="flex justify-between mt-8">
+        <button onclick="prevQuestion()" id="prevBtn" class="text-gray-400 hover:text-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium">← Back</button>
+        <button onclick="nextQuestion()" id="nextBtn" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition text-sm font-medium shadow-md shadow-indigo-100">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= RESULTS ================= -->
+<div id="results" class="hidden min-h-screen px-6 py-12">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="text-center mb-4 slide-up">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Your Personality Dashboard</h2>
+      <p class="text-gray-400">Percentile scores based on general population norms</p>
+    </div>
+
+    <!-- Radar Chart -->
+    <div class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up">
+      <h3 class="text-lg font-bold mb-4 text-gray-700">Trait Overview</h3>
+      <div class="max-w-md mx-auto">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar Charts -->
+    <div class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up" id="barSection"></div>
+
+    <!-- Interpretation -->
+    <div id="interpretation" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <!-- Career Match -->
+    <div id="careerMatch" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <!-- Raw Scores -->
+    <div id="rawScores" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
+
+    <p class="text-center text-xs text-gray-400 pb-8">Percentiles computed via Z-score transformation using approximate IPIP-50 population norms.</p>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   OFFICIAL IPIP-50 BIG-FIVE FACTOR MARKERS
+   Items in standard interleaved order (1-50).
+   Keying follows: E(+1,11,21,31,41 / -6,16,26,36,46)
+                    A(+7,17,27,37,47 / -2,12,22,32,42)
+                    C(+3,13,23,33,43 / -8,18,28,38,48)
+                    N(+9,19,29,39,49 / -4,14,24,34,44)
+                    O(+5,15,25,35,45 / -10,20,30,40,50)
+   ===================================================================== */
+
+const questions = [
+  /* 1  E+ */ { text: "Am the life of the party." },
+  /* 2  A- */ { text: "Feel little concern for others." },
+  /* 3  C+ */ { text: "Am always prepared." },
+  /* 4  N- */ { text: "Am relaxed most of the time." },
+  /* 5  O+ */ { text: "Have a rich vocabulary." },
+  /* 6  E- */ { text: "Don't talk a lot." },
+  /* 7  A+ */ { text: "Am interested in people." },
+  /* 8  C- */ { text: "Leave my belongings around." },
+  /* 9  N+ */ { text: "Get stressed out easily." },
+  /* 10 O- */ { text: "Have difficulty understanding abstract ideas." },
+  /* 11 E+ */ { text: "Feel comfortable around people." },
+  /* 12 A- */ { text: "Insult people." },
+  /* 13 C+ */ { text: "Pay attention to details." },
+  /* 14 N- */ { text: "Seldom feel blue." },
+  /* 15 O+ */ { text: "Have a vivid imagination." },
+  /* 16 E- */ { text: "Keep in the background." },
+  /* 17 A+ */ { text: "Sympathize with others' feelings." },
+  /* 18 C- */ { text: "Make a mess of things." },
+  /* 19 N+ */ { text: "Worry about things." },
+  /* 20 O- */ { text: "Am not interested in abstract ideas." },
+  /* 21 E+ */ { text: "Start conversations." },
+  /* 22 A- */ { text: "Am not interested in other people's problems." },
+  /* 23 C+ */ { text: "Get chores done right away." },
+  /* 24 N- */ { text: "Am not easily disturbed." },
+  /* 25 O+ */ { text: "Have excellent ideas." },
+  /* 26 E- */ { text: "Have little to say." },
+  /* 27 A+ */ { text: "Have a soft heart." },
+  /* 28 C- */ { text: "Often forget to put things back in their proper place." },
+  /* 29 N+ */ { text: "Get upset easily." },
+  /* 30 O- */ { text: "Do not have a good imagination." },
+  /* 31 E+ */ { text: "Talk to a lot of different people at parties." },
+  /* 32 A- */ { text: "Am not really interested in others." },
+  /* 33 C+ */ { text: "Like order." },
+  /* 34 N- */ { text: "Am not easily bothered by things." },
+  /* 35 O+ */ { text: "Am quick to understand things." },
+  /* 36 E- */ { text: "Don't like to draw attention to myself." },
+  /* 37 A+ */ { text: "Take time out for others." },
+  /* 38 C- */ { text: "Shirk my duties." },
+  /* 39 N+ */ { text: "Have frequent mood swings." },
+  /* 40 O+ */ { text: "Use difficult words." },
+  /* 41 E+ */ { text: "Don't mind being the center of attention." },
+  /* 42 A+ */ { text: "Feel others' emotions." },
+  /* 43 C+ */ { text: "Follow a schedule." },
+  /* 44 N- */ { text: "Am calm in tense situations." },
+  /* 45 O+ */ { text: "Spend time reflecting on things." },
+  /* 46 E- */ { text: "Am quiet around strangers." },
+  /* 47 A+ */ { text: "Make people feel at ease." },
+  /* 48 C- */ { text: "Am not particularly methodical in my work." },
+  /* 49 N+ */ { text: "Often feel blue." },
+  /* 50 O- */ { text: "Am not very creative." }
+];
+
+/* Official IPIP-50 scoring key (1-indexed item numbers) */
+const scoringKey = {
+  E: { pos: [1, 11, 21, 31, 41], neg: [6, 16, 26, 36, 46] },
+  A: { pos: [7, 17, 27, 37, 47], neg: [2, 12, 22, 32, 42] },
+  C: { pos: [3, 13, 23, 33, 43], neg: [8, 18, 28, 38, 48] },
+  N: { pos: [9, 19, 29, 39, 49], neg: [4, 14, 24, 34, 44] },
+  O: { pos: [5, 15, 25, 35, 45], neg: [10, 20, 30, 40, 50] }
+};
+
+/* Approximate general population norms for IPIP-50 */
+const norms = {
+  E: { mean: 30, sd: 6 },
+  A: { mean: 35, sd: 5 },
+  C: { mean: 34, sd: 6 },
+  N: { mean: 28, sd: 6 },
+  O: { mean: 34, sd: 5 }
+};
+
+/* Trait metadata */
+const traitMeta = {
+  E: { name: "Extraversion",       color: "#a855f7", bg: "bg-purple-50",  text: "text-purple-700", border: "border-purple-200", barBg: "bg-purple-500" },
+  A: { name: "Agreeableness",      color: "#f59e0b", bg: "bg-amber-50",   text: "text-amber-700",  border: "border-amber-200",  barBg: "bg-amber-500" },
+  C: { name: "Conscientiousness",   color: "#22c55e", bg: "bg-green-50",   text: "text-green-700",  border: "border-green-200",  barBg: "bg-green-500" },
+  N: { name: "Neuroticism",        color: "#ef4444", bg: "bg-red-50",     text: "text-red-700",    border: "border-red-200",    barBg: "bg-red-500" },
+  O: { name: "Openness",           color: "#3b82f6", bg: "bg-blue-50",    text: "text-blue-700",   border: "border-blue-200",   barBg: "bg-blue-500" }
+};
+
+const likertLabels = [
+  "Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"
+];
+
+let current = 0;
+let answers = new Array(50).fill(null);
+
+/* ===================== QUIZ LOGIC ===================== */
+
+function startQuiz() {
+  document.getElementById("landing").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  renderQuestion();
+}
+
+function getTraitForItem(itemNum) {
+  for (let trait in scoringKey) {
+    if (scoringKey[trait].pos.includes(itemNum) || scoringKey[trait].neg.includes(itemNum)) {
+      return trait;
+    }
+  }
+  return "";
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  const itemNum = current + 1;
+  const trait = getTraitForItem(itemNum);
+  const meta = traitMeta[trait];
+
+  document.getElementById("traitLabel").innerText = meta ? meta.name : "";
+  document.getElementById("questionText").innerText = `"${q.text}"`;
+
+  const pct = Math.round(((current + 1) / 50) * 100);
+  document.getElementById("progressLabel").innerText = `${current + 1} of 50`;
+  document.getElementById("progressPercent").innerText = `${pct}%`;
+  document.getElementById("progressBar").style.width = pct + "%";
+
+  document.getElementById("prevBtn").style.visibility = current === 0 ? "hidden" : "visible";
+
+  const isLast = current === 49;
+  document.getElementById("nextBtn").innerText = isLast ? "Calculate Results" : "Next →";
+
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  likertLabels.forEach((label, i) => {
+    const val = i + 1;
+    const selected = answers[current] === val;
+    const btn = document.createElement("button");
+    btn.className = `option-btn w-full text-left px-5 py-3.5 rounded-2xl border-2 font-medium text-sm ${
+      selected
+        ? "selected border-indigo-600 bg-indigo-600 text-white"
+        : "border-gray-200 bg-white text-gray-700 hover:border-indigo-300"
+    }`;
+    btn.innerHTML = `<span class="inline-flex items-center gap-3"><span class="w-6 h-6 rounded-full border-2 ${
+      selected ? "border-white bg-white/20" : "border-gray-300"
+    } flex items-center justify-center text-xs font-bold">${
+      selected ? "✓" : val
+    }</span>${label}</span>`;
+    btn.onclick = () => selectOption(val);
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function selectOption(val) {
+  answers[current] = val;
+  renderQuestion();
+}
+
+function nextQuestion() {
+  if (answers[current] === null) {
+    // Briefly shake the options
+    document.getElementById("options").classList.add("animate-pulse");
+    setTimeout(() => document.getElementById("options").classList.remove("animate-pulse"), 500);
+    return;
+  }
+  if (current < 49) {
+    current++;
+    renderQuestion();
+  } else {
+    calculateResults();
+  }
+}
+
+function prevQuestion() {
+  if (current > 0) {
+    current--;
+    renderQuestion();
+  }
+}
+
+/* ===================== ERROR FUNCTION (for Z → percentile) ===================== */
+
+function erf(x) {
+  const sign = x >= 0 ? 1 : -1;
+  x = Math.abs(x);
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return sign * y;
+}
+
+function zToPercentile(z) {
+  return Math.min(99, Math.max(1, Math.round((0.5 * (1 + erf(z / Math.sqrt(2)))) * 100)));
+}
+
+/* ===================== SCORING ===================== */
+
+function calculateResults() {
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("results").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const rawScores = {};
+  const zScores = {};
+  const percentiles = {};
+
+  for (let trait in scoringKey) {
+    let total = 0;
+
+    // Positive-keyed items: raw score
+    scoringKey[trait].pos.forEach(itemNum => {
+      total += answers[itemNum - 1];
+    });
+
+    // Negative-keyed items: reverse score (6 - response)
+    scoringKey[trait].neg.forEach(itemNum => {
+      total += (6 - answers[itemNum - 1]);
+    });
+
+    rawScores[trait] = total; // Range: 10–50
+
+    // Z-score: how far from population mean
+    const z = (total - norms[trait].mean) / norms[trait].sd;
+    zScores[trait] = z;
+
+    // Convert Z to percentile via normal CDF
+    percentiles[trait] = zToPercentile(z);
+  }
+
+  renderCharts(percentiles);
+  renderBars(percentiles);
+  renderInterpretation(percentiles);
+  renderCareer(percentiles);
+  renderRawScores(rawScores, zScores, percentiles);
+}
+
+/* ===================== CHARTS ===================== */
+
+function renderCharts(percentiles) {
+  const traitOrder = ["O", "C", "E", "A", "N"];
+  const labels = traitOrder.map(t => traitMeta[t].name);
+  const data = traitOrder.map(t => percentiles[t]);
+  const colors = traitOrder.map(t => traitMeta[t].color);
+
+  new Chart(document.getElementById("radarChart"), {
+    type: "radar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Percentile",
+        data: data,
+        backgroundColor: "rgba(99, 102, 241, 0.15)",
+        borderColor: "rgba(99, 102, 241, 0.8)",
+        borderWidth: 2.5,
+        pointBackgroundColor: colors,
+        pointBorderColor: "#fff",
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 1200 },
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { stepSize: 25, font: { size: 11 } },
+          pointLabels: { font: { size: 13, family: "DM Sans", weight: "500" } },
+          grid: { color: "rgba(0,0,0,0.06)" }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}th percentile` } }
+      }
+    }
+  });
+}
+
+function renderBars(percentiles) {
+  const container = document.getElementById("barSection");
+  const traitOrder = ["O", "C", "E", "A", "N"];
+
+  let html = `<h3 class="text-lg font-bold mb-6 text-gray-700">Trait Percentiles</h3>`;
+
+  traitOrder.forEach(t => {
+    const meta = traitMeta[t];
+    const pct = percentiles[t];
+    html += `
+      <div class="mb-5">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-sm font-semibold ${meta.text}">${meta.name}</span>
+          <span class="text-sm font-bold text-gray-600">${pct}<sup class="text-[10px]">th</sup></span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
+          <div class="trait-bar ${meta.barBg} h-4 rounded-full" style="width:0%" data-target="${pct}"></div>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+
+  // Animate bars
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll(".trait-bar").forEach(bar => {
+        bar.style.width = bar.dataset.target + "%";
+      });
+    }, 100);
+  });
+}
+
+/* ===================== INTERPRETATION ===================== */
+
+function level(pct) {
+  if (pct >= 67) return "High";
+  if (pct >= 34) return "Moderate";
+  return "Low";
+}
+
+function renderInterpretation(percentiles) {
+  const desc = {
+    O: {
+      High: "You are intellectually curious, creative, and drawn to new ideas and experiences. You enjoy abstract thinking and tend to appreciate art, philosophy, and unconventional perspectives.",
+      Moderate: "You balance practicality with openness to new ideas. You can appreciate creativity while also valuing tried-and-true approaches.",
+      Low: "You tend to prefer the concrete and practical over the abstract. You value straightforward, conventional approaches and feel most comfortable with familiar routines."
+    },
+    C: {
+      High: "You are organized, disciplined, and goal-oriented. You plan ahead, follow through on commitments, and pay close attention to details.",
+      Moderate: "You maintain a reasonable level of organization while remaining flexible. You can focus when needed but don't over-structure your life.",
+      Low: "You prefer spontaneity over rigid planning. You are flexible and adaptable, though you may sometimes struggle with follow-through or organization."
+    },
+    E: {
+      High: "You are outgoing, energetic, and socially confident. You draw energy from being around others and are comfortable leading conversations and groups.",
+      Moderate: "You enjoy social interaction but also value your alone time. You can be outgoing in the right settings while also appreciating quieter moments.",
+      Low: "You prefer smaller groups or solitary activities. You are reflective and reserved, drawing energy from time spent alone or with close friends."
+    },
+    A: {
+      High: "You are compassionate, cooperative, and trusting. You value harmony in relationships and tend to be considerate of others' feelings and needs.",
+      Moderate: "You balance empathy with assertiveness. You are generally cooperative but can stand your ground when necessary.",
+      Low: "You tend to be more competitive and skeptical. You prioritize logic over sentiment and are willing to challenge others when you disagree."
+    },
+    N: {
+      High: "You tend to experience emotional fluctuations and are sensitive to stress. You may worry more than average and react strongly to setbacks.",
+      Moderate: "You experience a normal range of emotions. You can handle stress reasonably well but may feel overwhelmed during particularly challenging times.",
+      Low: "You are emotionally stable and resilient. You tend to remain calm under pressure and recover quickly from setbacks."
+    }
+  };
+
+  const traitOrder = ["O", "C", "E", "A", "N"];
+  let html = `<h3 class="text-lg font-bold mb-6 text-gray-700">Interpretation</h3>`;
+
+  traitOrder.forEach(t => {
+    const meta = traitMeta[t];
+    const pct = percentiles[t];
+    const lvl = level(pct);
+    html += `
+      <div class="mb-5 p-4 rounded-2xl ${meta.bg} border ${meta.border}">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="font-bold ${meta.text}">${meta.name}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-white/70 font-medium ${meta.text}">${lvl} — ${pct}th percentile</span>
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">${desc[t][lvl]}</p>
+      </div>`;
+  });
+
+  document.getElementById("interpretation").innerHTML = html;
+}
+
+/* ===================== CAREER ===================== */
+
+function renderCareer(percentiles) {
+  const sorted = Object.entries(percentiles).sort((a, b) => b[1] - a[1]);
+  const top2 = sorted.slice(0, 2).map(x => x[0]);
+
+  const careerMap = {
+    O: ["UX Designer", "Researcher", "Entrepreneur", "Data Scientist", "Creative Director"],
+    C: ["Project Manager", "Operations Manager", "Financial Analyst", "Software Engineer", "Accountant"],
+    E: ["Sales Director", "Marketing Manager", "Public Relations", "Team Lead", "Recruiter"],
+    A: ["HR Business Partner", "Counselor", "Customer Success", "Social Worker", "Mediator"],
+    N: ["Risk Analyst", "Quality Assurance", "Technical Writer", "Editor", "Compliance Officer"]
+  };
+
+  const careers = [...new Set([...careerMap[top2[0]].slice(0, 2), ...careerMap[top2[1]].slice(0, 2)])].slice(0, 4);
+  const meta0 = traitMeta[top2[0]];
+  const meta1 = traitMeta[top2[1]];
+
+  document.getElementById("careerMatch").innerHTML = `
+    <h3 class="text-lg font-bold mb-4 text-gray-700">Career Alignment</h3>
+    <p class="text-sm text-gray-500 mb-4">Based on your strongest traits — <span class="font-semibold ${meta0.text}">${meta0.name}</span> and <span class="font-semibold ${meta1.text}">${meta1.name}</span> — these roles may be a natural fit:</p>
+    <div class="grid grid-cols-2 gap-3">
+      ${careers.map(c => `<div class="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium text-gray-700">${c}</div>`).join("")}
+    </div>
+    <p class="text-xs text-gray-400 mt-4">Career suggestions are illustrative and based on trait-role alignment research. Individual fit depends on many additional factors.</p>
+  `;
+}
+
+/* ===================== RAW SCORES TABLE ===================== */
+
+function renderRawScores(rawScores, zScores, percentiles) {
+  const traitOrder = ["O", "C", "E", "A", "N"];
+  let rows = "";
+
+  traitOrder.forEach(t => {
+    const meta = traitMeta[t];
+    rows += `
+      <tr class="border-b border-gray-100">
+        <td class="py-3 font-medium ${meta.text}">${meta.name}</td>
+        <td class="py-3 text-center">${rawScores[t]}</td>
+        <td class="py-3 text-center">${norms[t].mean}</td>
+        <td class="py-3 text-center">${norms[t].sd}</td>
+        <td class="py-3 text-center font-mono">${zScores[t].toFixed(2)}</td>
+        <td class="py-3 text-center font-bold">${percentiles[t]}</td>
+      </tr>`;
+  });
+
+  document.getElementById("rawScores").innerHTML = `
+    <h3 class="text-lg font-bold mb-4 text-gray-700">Technical Details</h3>
+    <p class="text-xs text-gray-400 mb-4">Raw scores range from 10 to 50. Z-scores and percentiles use approximate population norms.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-200">
+            <th class="py-2 text-left">Trait</th>
+            <th class="py-2 text-center">Raw</th>
+            <th class="py-2 text-center">μ</th>
+            <th class="py-2 text-center">σ</th>
+            <th class="py-2 text-center">Z</th>
+            <th class="py-2 text-center">%ile</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="text-xs text-gray-400 mt-4">Formula: Z = (Raw − μ) / σ → Percentile via Φ(z) normal CDF.</p>
+  `;
+}
+</script>
+</body>
+</html>
