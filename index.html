@@ -154,6 +154,9 @@ tailwind.config = {
       <button id="mobileMenuButton" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileMenu" class="md:hidden w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
+      <a href="mailto:hello@mindgauge.app?subject=MindGauge%20Demo%20Request" class="hidden md:inline-flex border border-stone-200 text-ink-700 px-4 py-2 rounded-xl text-sm font-medium hover:border-ink-400 hover:text-ink-950 transition">
+        Book Demo
+      </a>
       <a href="#assessments" class="hidden md:inline-flex bg-ink-950 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-ink-800 transition shadow-sm">
         Get Started
       </a>
@@ -166,6 +169,7 @@ tailwind.config = {
     <a href="#how-it-works" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">How It Works</a>
     <a href="#for-teams" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">For Teams</a>
     <a href="#faq" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">FAQ</a>
+    <a href="mailto:hello@mindgauge.app?subject=MindGauge%20Demo%20Request" onclick="toggleMobileMenu()" class="block text-ink-950 font-semibold">Book Demo</a>
   </div>
 </nav>
 
@@ -246,6 +250,13 @@ tailwind.config = {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
       </a>
     </div>
+    <div class="reveal mt-8 bg-white border border-stone-200 rounded-2xl p-4 md:p-5">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">Use Case:</span> <span class="text-ink-600">Hiring</span></div>
+        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">Use Case:</span> <span class="text-ink-600">Leadership Development</span></div>
+        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">Use Case:</span> <span class="text-ink-600">Team Coaching</span></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -263,6 +274,36 @@ tailwind.config = {
       <button onclick="filterCards(event, 'personality')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Personality</button>
       <button onclick="filterCards(event, 'motivation')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Motivation & Grit</button>
       <button onclick="filterCards(event, 'engagement')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Engagement</button>
+    </div>
+
+    <!-- Sample Report Previews -->
+    <div class="reveal reveal-delay-3 mb-10">
+      <div class="flex items-end justify-between mb-4">
+        <h3 class="font-display text-2xl md:text-3xl font-bold text-ink-950">Sample report screenshots</h3>
+        <span class="text-xs text-ink-400">Click any preview to open the assessment</span>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="ipip-neo-120-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+          <img src="assets/report-previews/ipip-neo-120.svg" alt="IPIP-NEO-120 sample report screenshot" class="w-full h-44 object-cover">
+          <div class="px-4 py-3 text-sm font-medium text-ink-700">IPIP-NEO-120</div>
+        </a>
+        <a href="big5-ipip50-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+          <img src="assets/report-previews/big5-ipip50.svg" alt="Big Five sample report screenshot" class="w-full h-44 object-cover">
+          <div class="px-4 py-3 text-sm font-medium text-ink-700">Big Five (IPIP-50)</div>
+        </a>
+        <a href="gse-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+          <img src="assets/report-previews/gse.svg" alt="General Self-Efficacy sample report screenshot" class="w-full h-44 object-cover">
+          <div class="px-4 py-3 text-sm font-medium text-ink-700">General Self-Efficacy</div>
+        </a>
+        <a href="grit-s-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+          <img src="assets/report-previews/grit-s.svg" alt="Grit-S sample report screenshot" class="w-full h-44 object-cover">
+          <div class="px-4 py-3 text-sm font-medium text-ink-700">Grit-S</div>
+        </a>
+        <a href="uwes9-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+          <img src="assets/report-previews/uwes9.svg" alt="UWES-9 sample report screenshot" class="w-full h-44 object-cover">
+          <div class="px-4 py-3 text-sm font-medium text-ink-700">UWES-9</div>
+        </a>
+      </div>
     </div>
 
     <!-- Assessment Cards Grid -->
@@ -600,6 +641,7 @@ tailwind.config = {
           <p>Not a substitute for professional psychological assessment.</p>
           <p>No data collected. No cookies. No tracking.</p>
           <p>All computations run client-side in your browser.</p>
+          <a href="mailto:hello@mindgauge.app?subject=MindGauge%20Demo%20Request" class="inline-block mt-2 text-ink-600 hover:text-ink-950 transition">Request a demo →</a>
         </div>
       </div>
     </div>
