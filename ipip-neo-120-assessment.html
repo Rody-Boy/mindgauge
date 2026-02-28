@@ -25,6 +25,9 @@ tailwind.config = {
   .progress-fill { transition: width .3s cubic-bezier(.4,0,.2,1); }
   .trait-bar { transition: width 1.2s cubic-bezier(.4,0,.2,1); }
   .facet-bar { transition: width 1s cubic-bezier(.4,0,.2,1); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body class="bg-stone-50 text-gray-800 min-h-screen">
@@ -85,9 +88,13 @@ tailwind.config = {
         <div id="progressBar" class="progress-fill bg-indigo-600 h-2 rounded-full" style="width:1%"></div>
       </div>
       <p id="domainLabel" class="text-xs font-medium uppercase tracking-wider mb-1" style="color:#4f46e5"></p>
-      <p id="facetLabel" class="text-[10px] text-gray-400 mb-4"></p>
+      <p id="facetLabel" class="text-[10px] text-gray-400 mb-2"></p>
+      <div class="flex items-center justify-between text-[10px] text-gray-400 mb-4 px-1">
+        <span>Strongly Disagree</span>
+        <span>Strongly Agree</span>
+      </div>
       <h2 id="questionText" class="text-lg md:text-xl font-bold text-gray-900 mb-6 leading-snug"></h2>
-      <div id="options" class="grid grid-cols-5 gap-2"></div>
+      <div id="options" class="grid grid-cols-1 sm:grid-cols-5 gap-2"></div>
       <div class="flex justify-between mt-6">
         <button onclick="prevQ()" id="prevBtn" class="text-gray-400 hover:text-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium">← Back</button>
         <button onclick="nextQ()" id="nextBtn" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition text-sm font-medium shadow-md">Next →</button>
@@ -296,6 +303,14 @@ const shortLabels = ["VI","I","N","A","VA"];
 
 let current = 0;
 let answers = new Array(TOTAL).fill(null); // indexed by ORIGINAL item index
+
+document.addEventListener('keydown', (e) => {
+  if(document.getElementById('quiz').classList.contains('hidden')) return;
+  const key = e.key;
+  if(key >= '1' && key <= '5') selectOption(parseInt(key, 10));
+  if(key === 'ArrowRight') nextQ();
+  if(key === 'ArrowLeft') prevQ();
+});
 
 const domainMeta = {
   N: {name:"Neuroticism",color:"#ef4444",bg:"bg-red-50",text:"text-red-700",border:"border-red-200",barBg:"bg-red-500"},
