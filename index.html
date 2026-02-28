@@ -154,10 +154,10 @@ tailwind.config = {
       <button id="mobileMenuButton" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileMenu" class="md:hidden w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="hidden md:inline-flex border border-stone-200 text-ink-700 px-4 py-2 rounded-xl text-sm font-medium hover:border-ink-400 hover:text-ink-950 transition">
+      <a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="hidden md:inline-flex bg-ink-950 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-ink-800 transition shadow-sm">
         Book Demo
       </a>
-      <a href="#assessments" class="hidden md:inline-flex bg-ink-950 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-ink-800 transition shadow-sm">
+      <a href="#assessments" class="hidden md:inline-flex border border-stone-200 text-ink-700 px-4 py-2 rounded-xl text-sm font-medium hover:border-ink-400 hover:text-ink-950 transition">
         Get Started
       </a>
     </div>
@@ -274,51 +274,6 @@ tailwind.config = {
   </div>
 </section>
 
-<!-- ==================== FOR TEAMS ==================== -->
-<section id="for-teams" class="py-20 md:py-24 px-6 bg-ink-50 border-y border-stone-200">
-  <div class="max-w-6xl mx-auto">
-    <div class="text-center mb-12">
-      <h2 class="reveal text-4xl md:text-5xl font-display font-bold text-ink-950 mb-4">Client-ready, from day one</h2>
-      <p class="reveal reveal-delay-1 text-ink-500 text-lg max-w-3xl mx-auto">Use MindGauge in hiring, leadership development, and team coaching with clear outputs your stakeholders can understand in minutes.</p>
-    </div>
-    <div class="grid md:grid-cols-3 gap-5">
-      <div class="reveal feature-card bg-white rounded-2xl border border-stone-200 p-6">
-        <h3 class="font-display text-xl font-bold text-ink-950 mb-2">Executive-friendly reporting</h3>
-        <p class="text-sm text-ink-500 leading-relaxed">Percentile-based summaries, trait visuals, and practical language make it easier to share insights with candidates, managers, and clients.</p>
-      </div>
-      <div class="reveal reveal-delay-1 feature-card bg-white rounded-2xl border border-stone-200 p-6">
-        <h3 class="font-display text-xl font-bold text-ink-950 mb-2">Privacy-first workflow</h3>
-        <p class="text-sm text-ink-500 leading-relaxed">No tracking scripts, no account wall, and no server-side data storage. Everything runs in-browser so users keep control of their responses.</p>
-      </div>
-      <div class="reveal reveal-delay-2 feature-card bg-white rounded-2xl border border-stone-200 p-6">
-        <h3 class="font-display text-xl font-bold text-ink-950 mb-2">Built for pilot programs</h3>
-        <p class="text-sm text-ink-500 leading-relaxed">Start quickly with zero licensing costs, then validate fit across teams before deciding whether to invest in a larger assessment stack.</p>
-      </div>
-    </div>
-    <div class="reveal reveal-delay-3 text-center mt-10">
-      <a href="#assessments" class="inline-flex items-center gap-2 bg-ink-950 text-white px-6 py-3 rounded-xl font-medium hover:bg-ink-800 transition">
-        View Assessments
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-      </a>
-    </div>
-    <div class="reveal reveal-delay-4 mt-8 bg-white border border-stone-200 rounded-2xl p-5">
-      <h3 class="font-display text-xl font-bold text-ink-950 mb-3">How teams use MindGauge</h3>
-      <div class="grid md:grid-cols-3 gap-3 text-sm">
-        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">1.</span> <span class="text-ink-600">Pick an assessment for your objective.</span></div>
-        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">2.</span> <span class="text-ink-600">Share link and complete in-browser.</span></div>
-        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">3.</span> <span class="text-ink-600">Review report and set action plans.</span></div>
-      </div>
-    </div>
-    <div class="reveal mt-8 bg-white border border-stone-200 rounded-2xl p-4 md:p-5">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">Use Case:</span> <span class="text-ink-600">Hiring</span></div>
-        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">Use Case:</span> <span class="text-ink-600">Leadership Development</span></div>
-        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">Use Case:</span> <span class="text-ink-600">Team Coaching</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ==================== ASSESSMENTS ==================== -->
 <section id="assessments" class="py-20 md:py-28 px-6">
   <div class="max-w-6xl mx-auto">
@@ -339,28 +294,48 @@ tailwind.config = {
     <div class="reveal reveal-delay-3 mb-10">
       <div class="flex items-end justify-between mb-4">
         <h3 class="font-display text-2xl md:text-3xl font-bold text-ink-950">Sample report screenshots</h3>
-        <span class="text-xs text-ink-400">Click any preview to open the assessment</span>
+        <span class="text-xs text-ink-400">Preview output quality before starting</span>
       </div>
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <a href="ipip-neo-120-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a href="ipip-neo-120-assessment.html" class="group block bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <img src="assets/report-previews/ipip-neo-120.svg" alt="IPIP-NEO-120 sample report screenshot" class="w-full h-44 object-cover">
-          <div class="px-4 py-3 text-sm font-medium text-ink-700">IPIP-NEO-120</div>
+          <div class="px-4 py-3">
+            <div class="text-sm font-semibold text-ink-800">IPIP-NEO-120</div>
+            <div class="text-xs text-ink-500 mt-1">Includes domain radar, percentile bars, and facet-level detail.</div>
+            <div class="text-xs text-ink-700 mt-2 font-medium group-hover:underline">View live example →</div>
+          </div>
         </a>
-        <a href="big5-ipip50-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a href="big5-ipip50-assessment.html" class="group block bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <img src="assets/report-previews/big5-ipip50.svg" alt="Big Five sample report screenshot" class="w-full h-44 object-cover">
-          <div class="px-4 py-3 text-sm font-medium text-ink-700">Big Five (IPIP-50)</div>
+          <div class="px-4 py-3">
+            <div class="text-sm font-semibold text-ink-800">Big Five (IPIP-50)</div>
+            <div class="text-xs text-ink-500 mt-1">Fast OCEAN profile with normative percentile interpretation.</div>
+            <div class="text-xs text-ink-700 mt-2 font-medium group-hover:underline">View live example →</div>
+          </div>
         </a>
-        <a href="gse-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a href="gse-assessment.html" class="group block bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <img src="assets/report-previews/gse.svg" alt="General Self-Efficacy sample report screenshot" class="w-full h-44 object-cover">
-          <div class="px-4 py-3 text-sm font-medium text-ink-700">General Self-Efficacy</div>
+          <div class="px-4 py-3">
+            <div class="text-sm font-semibold text-ink-800">General Self-Efficacy</div>
+            <div class="text-xs text-ink-500 mt-1">Single-score resilience profile with clean percentile framing.</div>
+            <div class="text-xs text-ink-700 mt-2 font-medium group-hover:underline">View live example →</div>
+          </div>
         </a>
-        <a href="grit-s-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a href="grit-s-assessment.html" class="group block bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <img src="assets/report-previews/grit-s.svg" alt="Grit-S sample report screenshot" class="w-full h-44 object-cover">
-          <div class="px-4 py-3 text-sm font-medium text-ink-700">Grit-S</div>
+          <div class="px-4 py-3">
+            <div class="text-sm font-semibold text-ink-800">Grit-S</div>
+            <div class="text-xs text-ink-500 mt-1">Persistence and consistency indicators for coaching discussions.</div>
+            <div class="text-xs text-ink-700 mt-2 font-medium group-hover:underline">View live example →</div>
+          </div>
         </a>
-        <a href="uwes9-assessment.html" class="block bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a href="uwes9-assessment.html" class="group block bg-white border border-stone-200 rounded-2xl overflow-hidden">
           <img src="assets/report-previews/uwes9.svg" alt="UWES-9 sample report screenshot" class="w-full h-44 object-cover">
-          <div class="px-4 py-3 text-sm font-medium text-ink-700">UWES-9</div>
+          <div class="px-4 py-3">
+            <div class="text-sm font-semibold text-ink-800">UWES-9</div>
+            <div class="text-xs text-ink-500 mt-1">Engagement insights across vigor, dedication, and absorption.</div>
+            <div class="text-xs text-ink-700 mt-2 font-medium group-hover:underline">View live example →</div>
+          </div>
         </a>
       </div>
     </div>
@@ -617,6 +592,19 @@ tailwind.config = {
   </div>
 </section>
 
+<!-- ==================== DATA HANDLING ==================== -->
+<section id="data-handling" class="py-12 px-6 bg-white">
+  <div class="max-w-4xl mx-auto border border-stone-200 rounded-2xl p-6">
+    <h3 class="font-display text-2xl font-bold text-ink-950 mb-2">Data handling summary</h3>
+    <p class="text-sm text-ink-600 mb-3">Assessment responses are processed in-browser for interactive scoring views.</p>
+    <ul class="text-sm text-ink-500 list-disc pl-5 space-y-1">
+      <li>No account is required to complete assessments.</li>
+      <li>No tracking identifiers are used for profiling.</li>
+      <li>Organizations should confirm internal policy alignment before production rollout.</li>
+    </ul>
+  </div>
+</section>
+
 <!-- ==================== FAQ ==================== -->
 <section id="faq" class="py-20 md:py-28 px-6">
   <div class="max-w-3xl mx-auto">
@@ -714,6 +702,7 @@ tailwind.config = {
           <p>No data collected. No cookies. No tracking.</p>
           <p>All computations run client-side in your browser.</p>
           <a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="inline-block mt-2 text-ink-600 hover:text-ink-950 transition">Request a demo →</a>
+          <a href="#data-handling" class="inline-block ml-3 mt-2 text-ink-600 hover:text-ink-950 transition">Data handling</a>
         </div>
       </div>
     </div>
@@ -730,7 +719,7 @@ tailwind.config = {
   </div>
 </footer>
 
-<a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-ink-950 text-white text-center py-3 rounded-xl shadow-lg">Book Demo</a>
+<a id="stickyDemoCta" href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="md:hidden fixed left-4 right-4 z-40 bg-ink-950 text-white text-center py-3 rounded-xl shadow-lg" style="bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);">Book Demo</a>
 
 <!-- ==================== SCRIPTS ==================== -->
 <script>
@@ -833,6 +822,19 @@ function toggleMobileMenu() {
   const isOpen = mobileMenu.classList.toggle('open');
   mobileMenu.setAttribute('aria-hidden', String(!isOpen));
   trigger.setAttribute('aria-expanded', String(isOpen));
+}
+
+
+/* ===== Sticky mobile CTA visibility ===== */
+const stickyDemoCta = document.getElementById('stickyDemoCta');
+const footer = document.querySelector('footer');
+if(stickyDemoCta && footer) {
+  const ctaObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      stickyDemoCta.style.display = entry.isIntersecting ? 'none' : 'block';
+    });
+  }, { threshold: 0.05 });
+  ctaObserver.observe(footer);
 }
 
 /* ===== Nav scroll effect ===== */
