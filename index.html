@@ -102,6 +102,12 @@ tailwind.config = {
   .mobile-menu { transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
   .mobile-menu.open { transform: translateY(0); }
 
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+
   /* Dark mode */
   .dark body, body.dark { background: #1a1917; color: #e8e6df; }
   body.dark .nav-blur { background: rgba(26,25,23,0.85); }
@@ -140,11 +146,11 @@ tailwind.config = {
       <a href="#faq" class="hover:text-ink-950 transition">FAQ</a>
     </div>
     <div class="flex items-center gap-3">
-      <button onclick="toggleDark()" id="darkToggle" class="w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400 hover:text-ink-950 hover:border-ink-400 transition" title="Toggle dark mode">
+      <button onclick="toggleDark()" id="darkToggle" aria-label="Toggle dark mode" class="w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400 hover:text-ink-950 hover:border-ink-400 transition" title="Toggle dark mode">
         <svg id="sunIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <svg id="moonIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </button>
-      <button onclick="toggleMobileMenu()" class="md:hidden w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400">
+      <button id="mobileMenuButton" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileMenu" class="md:hidden w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <a href="#assessments" class="hidden md:inline-flex bg-ink-950 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-ink-800 transition shadow-sm">
@@ -153,7 +159,7 @@ tailwind.config = {
     </div>
   </div>
   <!-- Mobile Menu -->
-  <div id="mobileMenu" class="mobile-menu md:hidden absolute top-16 left-0 right-0 bg-white border-b border-stone-200 p-6 space-y-4 text-center">
+  <div id="mobileMenu" aria-hidden="true" class="mobile-menu md:hidden absolute top-16 left-0 right-0 bg-white border-b border-stone-200 p-6 space-y-4 text-center">
     <a href="#assessments" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">Assessments</a>
     <a href="#features" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">Features</a>
     <a href="#how-it-works" onclick="toggleMobileMenu()" class="block text-ink-700 font-medium">How It Works</a>
@@ -221,10 +227,10 @@ tailwind.config = {
 
     <!-- Filter Tabs -->
     <div class="reveal reveal-delay-2 flex flex-wrap justify-center gap-2 mb-12" id="filterTabs">
-      <button onclick="filterCards('all')" class="filter-tab active px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-ink-950 text-white transition">All</button>
-      <button onclick="filterCards('personality')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Personality</button>
-      <button onclick="filterCards('motivation')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Motivation & Grit</button>
-      <button onclick="filterCards('engagement')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Engagement</button>
+      <button onclick="filterCards(event, 'all')" class="filter-tab active px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-ink-950 text-white transition">All</button>
+      <button onclick="filterCards(event, 'personality')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Personality</button>
+      <button onclick="filterCards(event, 'motivation')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Motivation & Grit</button>
+      <button onclick="filterCards(event, 'engagement')" class="filter-tab px-4 py-2 rounded-xl text-sm font-medium border border-stone-200 bg-white text-ink-600 hover:bg-ink-50 transition">Engagement</button>
     </div>
 
     <!-- Assessment Cards Grid -->
@@ -472,39 +478,39 @@ tailwind.config = {
     <h2 class="reveal text-4xl md:text-5xl font-display font-bold text-ink-950 mb-12 text-center">Frequently Asked</h2>
     <div class="space-y-3" id="faqContainer">
       <div class="reveal faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
-        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+        <button onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-1" class="w-full flex items-center justify-between px-6 py-5 text-left">
           <span class="font-display font-bold text-ink-950">Are these tests scientifically validated?</span>
           <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">Yes. Each instrument has been published in peer-reviewed journals with established reliability (Cronbach's alpha) and validity. The IPIP-50 and IPIP-NEO-120 are based on Goldberg (1992) and Johnson (2014), the GSE on Schwarzer & Jerusalem (1995), the Grit-S on Duckworth & Quinn (2009), and the UWES-9 on Schaufeli, Bakker & Salanova (2006).</div>
+        <div id="faq-answer-1" role="region" class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">Yes. Each instrument has been published in peer-reviewed journals with established reliability (Cronbach's alpha) and validity. The IPIP-50 and IPIP-NEO-120 are based on Goldberg (1992) and Johnson (2014), the GSE on Schwarzer & Jerusalem (1995), the Grit-S on Duckworth & Quinn (2009), and the UWES-9 on Schaufeli, Bakker & Salanova (2006).</div>
       </div>
       <div class="reveal reveal-delay-1 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
-        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+        <button onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-2" class="w-full flex items-center justify-between px-6 py-5 text-left">
           <span class="font-display font-bold text-ink-950">Can I use these for hiring decisions?</span>
           <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">These assessments can inform HR decisions as part of a broader evaluation process, but should never be the sole basis for hiring or rejection. Personality assessments are best used for team-building, development planning, and self-awareness. Always consult legal guidance regarding employment testing in your jurisdiction.</div>
+        <div id="faq-answer-2" role="region" class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">These assessments can inform HR decisions as part of a broader evaluation process, but should never be the sole basis for hiring or rejection. Personality assessments are best used for team-building, development planning, and self-awareness. Always consult legal guidance regarding employment testing in your jurisdiction.</div>
       </div>
       <div class="reveal reveal-delay-2 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
-        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+        <button onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-3" class="w-full flex items-center justify-between px-6 py-5 text-left">
           <span class="font-display font-bold text-ink-950">Is my data stored anywhere?</span>
           <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">No. All computation happens entirely in your browser using JavaScript. No data is transmitted to any server, no cookies are set, and nothing is stored. When you close the page, your responses are gone. You can save your results by taking a screenshot or printing the page.</div>
+        <div id="faq-answer-3" role="region" class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">No. All computation happens entirely in your browser using JavaScript. No data is transmitted to any server, no cookies are set, and nothing is stored. When you close the page, your responses are gone. You can save your results by taking a screenshot or printing the page.</div>
       </div>
       <div class="reveal reveal-delay-3 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
-        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+        <button onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-4" class="w-full flex items-center justify-between px-6 py-5 text-left">
           <span class="font-display font-bold text-ink-950">What does "public domain" mean?</span>
           <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">The IPIP items are fully public domain — free for any use without licensing fees. The GSE, Grit-S, and UWES-9 are freely available for research and non-commercial use, but may have licensing nuances for commercial deployment. Always check the original authors' terms if using commercially.</div>
+        <div id="faq-answer-4" role="region" class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">The IPIP items are fully public domain — free for any use without licensing fees. The GSE, Grit-S, and UWES-9 are freely available for research and non-commercial use, but may have licensing nuances for commercial deployment. Always check the original authors' terms if using commercially.</div>
       </div>
       <div class="reveal reveal-delay-4 faq-item bg-white rounded-2xl border border-stone-200 overflow-hidden">
-        <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-5 text-left">
+        <button onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faq-answer-5" class="w-full flex items-center justify-between px-6 py-5 text-left">
           <span class="font-display font-bold text-ink-950">How accurate are the percentile scores?</span>
           <svg class="faq-chevron w-5 h-5 text-ink-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
         </button>
-        <div class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">Percentiles are computed using published population means and standard deviations, transformed via Z-score and normal CDF approximation. They represent approximate standing relative to the general population. For clinical-grade precision, a licensed psychologist with local norms would be recommended.</div>
+        <div id="faq-answer-5" role="region" class="faq-answer px-6 text-sm text-ink-500 leading-relaxed">Percentiles are computed using published population means and standard deviations, transformed via Z-score and normal CDF approximation. They represent approximate standing relative to the general population. For clinical-grade precision, a licensed psychologist with local norms would be recommended.</div>
       </div>
     </div>
   </div>
@@ -616,13 +622,13 @@ function animateCounters() {
 }
 
 /* ===== Filter Tabs ===== */
-function filterCards(category) {
+function filterCards(evt, category) {
   document.querySelectorAll('.filter-tab').forEach(tab => {
     tab.classList.remove('bg-ink-950','text-white');
     tab.classList.add('bg-white','text-ink-600');
   });
-  event.target.classList.remove('bg-white','text-ink-600');
-  event.target.classList.add('bg-ink-950','text-white');
+  evt.currentTarget.classList.remove('bg-white','text-ink-600');
+  evt.currentTarget.classList.add('bg-ink-950','text-white');
 
   document.querySelectorAll('.assessment-card').forEach(card => {
     const cat = card.dataset.category;
@@ -647,10 +653,12 @@ function toggleFaq(btn) {
   // Close all
   document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
   document.querySelectorAll('.faq-chevron').forEach(c => c.classList.remove('open'));
+  document.querySelectorAll('#faqContainer button[aria-expanded]').forEach(b => b.setAttribute('aria-expanded', 'false'));
 
   if(!isOpen) {
     answer.classList.add('open');
     chevron.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
   }
 }
 
@@ -672,7 +680,11 @@ if(localStorage.getItem('darkMode') === 'true') {
 
 /* ===== Mobile Menu ===== */
 function toggleMobileMenu() {
-  document.getElementById('mobileMenu').classList.toggle('open');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const trigger = document.getElementById('mobileMenuButton');
+  const isOpen = mobileMenu.classList.toggle('open');
+  mobileMenu.setAttribute('aria-hidden', String(!isOpen));
+  trigger.setAttribute('aria-expanded', String(isOpen));
 }
 
 /* ===== Nav scroll effect ===== */
