@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>IPIP-NEO-120 Personality — PsycheMetrics</title>
-<script src="https://cdn.tailwindcss.com">
-
-</script>
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
 <script>
 tailwind.config = {
@@ -117,10 +117,11 @@ tailwind.config = {
     <div class="text-center mb-4 slide-up">
       <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Your IPIP-NEO-120 Profile</h2>
       <p class="text-gray-400 mb-4">5 Domains · 30 Facets · Percentile-referenced scores</p>
-      <div class="flex flex-wrap justify-center gap-3">
+      <div class="no-export flex flex-wrap justify-center gap-3">
         <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Print / Save PDF</button>
+        <button onclick="exportResultsPdf()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Export Results PDF</button>
         <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Copy Summary</button>
-        <button onclick="downloadChartPng()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Download Chart PNG</button>
+        <button onclick="downloadChartPng()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Export Results PNG</button>
         <button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Back to top</button>
       </div>
     </div>
@@ -567,13 +568,74 @@ function copySummary(){
   });
 }
 
-function downloadChartPng(){
-  const canvas = document.getElementById('radarChart');
+
+async function captureResultsCanvas() {
+  const source = document.querySelector('#results > div');
+  if(!source) return null;
+
+  const clone = source.cloneNode(true);
+  clone.querySelectorAll('.no-export').forEach(el => el.remove());
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-99999px';
+  wrapper.style.top = '0';
+  wrapper.style.width = source.offsetWidth + 'px';
+  wrapper.style.background = '#fff';
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  const canvas = await html2canvas(clone, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true
+  });
+
+  wrapper.remove();
+  return canvas;
+}
+
+async function exportResultsPdf() {
+  const canvas = await captureResultsCanvas();
+  if(!canvas) return;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'pt', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 24;
+  const imgWidth = pageWidth - margin * 2;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const pageInnerHeight = pageHeight - margin * 2;
+
+  const imgData = canvas.toDataURL('image/png');
+  let heightLeft = imgHeight;
+  let position = margin;
+
+  pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+  heightLeft -= pageInnerHeight;
+
+  while (heightLeft > 0) {
+    pdf.addPage();
+    position = margin - (imgHeight - heightLeft);
+    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+    heightLeft -= pageInnerHeight;
+  }
+
+  pdf.save('psychemetrics-results.pdf');
+}
+
+async function exportResultsPng() {
+  const canvas = await captureResultsCanvas();
   if(!canvas) return;
   const link = document.createElement('a');
-  link.download = 'psychemetrics-ipip-radar.png';
+  link.download = 'psychemetrics-results.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
+}
+
+function downloadChartPng() {
+  exportResultsPng();
 }
 </script>
 </body>
