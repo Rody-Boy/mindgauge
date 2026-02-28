@@ -328,6 +328,14 @@ document.addEventListener('keydown', (e) => {
   if(key === 'ArrowLeft') prevQ();
 });
 
+document.addEventListener('keydown', (e) => {
+  if(document.getElementById('quiz').classList.contains('hidden')) return;
+  const key = e.key;
+  if(key >= '1' && key <= '5') selectOption(parseInt(key, 10));
+  if(key === 'ArrowRight') nextQ();
+  if(key === 'ArrowLeft') prevQ();
+});
+
 const domainMeta = {
   N: {name:"Neuroticism",color:"#ef4444",bg:"bg-red-50",text:"text-red-700",border:"border-red-200",barBg:"bg-red-500"},
   E: {name:"Extraversion",color:"#a855f7",bg:"bg-purple-50",text:"text-purple-700",border:"border-purple-200",barBg:"bg-purple-500"},
