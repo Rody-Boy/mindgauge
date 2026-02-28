@@ -189,14 +189,20 @@ tailwind.config = {
       Five scientifically validated, public-domain psychological instruments — built with proper scoring, norm-referenced percentiles, and beautiful interactive dashboards. Ready to use in your browser.
     </p>
     <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="#assessments" class="bg-ink-950 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-ink-800 transition shadow-lg shadow-ink-950/10 inline-flex items-center gap-2">
+      <a href="mailto:hello@mindgauge.app?subject=MindGauge%20Demo%20Request" class="bg-ink-950 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-ink-800 transition shadow-lg shadow-ink-950/10 inline-flex items-center gap-2">
+        Book a Demo
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#assessments" class="text-ink-500 px-8 py-4 rounded-2xl font-medium text-lg hover:text-ink-950 transition inline-flex items-center gap-2">
         Browse Assessments
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
       </a>
-      <a href="#how-it-works" class="text-ink-500 px-8 py-4 rounded-2xl font-medium text-lg hover:text-ink-950 transition inline-flex items-center gap-2">
-        How It Works
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-      </a>
+    </div>
+    <div class="reveal reveal-delay-4 mt-8 flex flex-wrap items-center justify-center gap-2 text-xs">
+      <span class="px-3 py-1 rounded-full bg-white border border-stone-200 text-ink-600">Peer-reviewed instruments</span>
+      <span class="px-3 py-1 rounded-full bg-white border border-stone-200 text-ink-600">No data leaves browser</span>
+      <span class="px-3 py-1 rounded-full bg-white border border-stone-200 text-ink-600">No signup required</span>
+      <span class="px-3 py-1 rounded-full bg-white border border-stone-200 text-ink-600">Free to pilot</span>
     </div>
   </div>
 </section>
@@ -249,6 +255,14 @@ tailwind.config = {
         View Assessments
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
       </a>
+    </div>
+    <div class="reveal reveal-delay-4 mt-8 bg-white border border-stone-200 rounded-2xl p-5">
+      <h3 class="font-display text-xl font-bold text-ink-950 mb-3">How teams use MindGauge</h3>
+      <div class="grid md:grid-cols-3 gap-3 text-sm">
+        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">1.</span> <span class="text-ink-600">Pick an assessment for your objective.</span></div>
+        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">2.</span> <span class="text-ink-600">Share link and complete in-browser.</span></div>
+        <div class="rounded-xl bg-ink-50 px-4 py-3"><span class="font-semibold text-ink-950">3.</span> <span class="text-ink-600">Review report and set action plans.</span></div>
+      </div>
     </div>
     <div class="reveal mt-8 bg-white border border-stone-200 rounded-2xl p-4 md:p-5">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
@@ -545,6 +559,19 @@ tailwind.config = {
   </div>
 </section>
 
+<!-- ==================== RESPONSIBLE USE ==================== -->
+<section class="py-16 px-6 bg-white">
+  <div class="max-w-4xl mx-auto bg-ink-50 border border-stone-200 rounded-3xl p-8">
+    <h2 class="font-display text-3xl font-bold text-ink-950 mb-3">Responsible use guidance</h2>
+    <p class="text-ink-600 mb-4">MindGauge is best used as one signal in a broader process, not as a standalone hiring decision tool.</p>
+    <ul class="text-sm text-ink-600 space-y-2 list-disc pl-5">
+      <li>Combine results with structured interviews and role-relevant evidence.</li>
+      <li>Use for coaching, development planning, and team alignment.</li>
+      <li>Review legal/compliance requirements for your jurisdiction before deployment.</li>
+    </ul>
+  </div>
+</section>
+
 <!-- ==================== FAQ ==================== -->
 <section id="faq" class="py-20 md:py-28 px-6">
   <div class="max-w-3xl mx-auto">
@@ -657,6 +684,8 @@ tailwind.config = {
     </div>
   </div>
 </footer>
+
+<a href="mailto:hello@mindgauge.app?subject=MindGauge%20Demo%20Request" class="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-ink-950 text-white text-center py-3 rounded-xl shadow-lg">Book Demo</a>
 
 <!-- ==================== SCRIPTS ==================== -->
 <script>
