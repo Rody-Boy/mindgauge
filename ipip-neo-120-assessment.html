@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>IPIP-NEO-120 Personality — MindGauge</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>IPIP-NEO-120 Personality — PsycheMetrics</title>
+<script src="https://cdn.tailwindcss.com">
+
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
 <script>
@@ -25,20 +27,23 @@ tailwind.config = {
   .progress-fill { transition: width .3s cubic-bezier(.4,0,.2,1); }
   .trait-bar { transition: width 1.2s cubic-bezier(.4,0,.2,1); }
   .facet-bar { transition: width 1s cubic-bezier(.4,0,.2,1); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body class="bg-stone-50 text-gray-800 min-h-screen">
 
-<!-- MindGauge Nav -->
+<!-- PsycheMetrics Nav -->
 <div class="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b border-stone-200/60" style="backdrop-filter:blur(16px);">
   <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
     <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-900 transition">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
-      Back to MindGauge
+      Back to PsycheMetrics
     </a>
     <a href="index.html" class="flex items-center gap-2">
       <div class="w-6 h-6 rounded-md bg-gray-900 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
-      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">MindGauge</span>
+      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">PsycheMetrics</span>
     </a>
   </div>
 </div>
@@ -58,7 +63,12 @@ tailwind.config = {
       <p class="text-gray-500 text-lg leading-relaxed mb-4">
         The IPIP-NEO-120 measures 5 broad personality domains and 30 specific facets of the Five Factor Model — providing a detailed map of your personality.
       </p>
-      <p class="text-gray-400 text-sm mb-3">120 questions · ~15 minutes · Public domain instrument (Johnson, 2014)</p>
+      <p class="text-gray-400 text-sm mb-3">120 questions · ~15 minutes · Validated instrument (Johnson, 2014)</p>
+      <div class="text-xs text-gray-500 mb-6 space-y-1">
+        <p>• You'll receive domain and facet-level percentile insights.</p>
+        <p>• Results include practical interpretation and role-alignment examples.</p>
+        <p>• Best used with interviews and other role-relevant evidence.</p>
+      </div>
       <div class="text-xs text-gray-400 mb-8 grid grid-cols-5 gap-2">
         <span class="px-2 py-1 rounded-lg bg-red-50 text-red-500 text-center font-medium">Neuroticism</span>
         <span class="px-2 py-1 rounded-lg bg-purple-50 text-purple-500 text-center font-medium">Extraversion</span>
@@ -80,14 +90,19 @@ tailwind.config = {
       <div class="flex items-center justify-between mb-2">
         <span id="progressLabel" class="text-xs font-medium text-gray-400"></span>
         <span id="progressPercent" class="text-xs font-medium text-indigo-600"></span>
+        <span id="etaLabel" class="text-xs font-medium text-gray-400"></span>
       </div>
       <div class="w-full bg-gray-100 rounded-full h-2 mb-6">
         <div id="progressBar" class="progress-fill bg-indigo-600 h-2 rounded-full" style="width:1%"></div>
       </div>
       <p id="domainLabel" class="text-xs font-medium uppercase tracking-wider mb-1" style="color:#4f46e5"></p>
-      <p id="facetLabel" class="text-[10px] text-gray-400 mb-4"></p>
+      <p id="facetLabel" class="text-[10px] text-gray-400 mb-2"></p>
+      <div class="flex items-center justify-between text-[10px] text-gray-400 mb-4 px-1">
+        <span>Strongly Disagree</span>
+        <span>Strongly Agree</span>
+      </div>
       <h2 id="questionText" class="text-lg md:text-xl font-bold text-gray-900 mb-6 leading-snug"></h2>
-      <div id="options" class="grid grid-cols-5 gap-2"></div>
+      <div id="options" class="grid grid-cols-1 sm:grid-cols-5 gap-2"></div>
       <div class="flex justify-between mt-6">
         <button onclick="prevQ()" id="prevBtn" class="text-gray-400 hover:text-gray-700 px-4 py-2 rounded-xl transition text-sm font-medium">← Back</button>
         <button onclick="nextQ()" id="nextBtn" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 transition text-sm font-medium shadow-md">Next →</button>
@@ -101,7 +116,13 @@ tailwind.config = {
   <div class="max-w-5xl mx-auto space-y-6">
     <div class="text-center mb-4 slide-up">
       <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Your IPIP-NEO-120 Profile</h2>
-      <p class="text-gray-400">5 Domains · 30 Facets · Percentile-referenced scores</p>
+      <p class="text-gray-400 mb-4">5 Domains · 30 Facets · Percentile-referenced scores</p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Print / Save PDF</button>
+        <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Copy Summary</button>
+        <button onclick="downloadChartPng()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Download Chart PNG</button>
+        <button onclick="window.scrollTo({top:0,behavior:'smooth'})" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Back to top</button>
+      </div>
     </div>
     <div class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up">
       <h3 class="text-lg font-bold mb-4 text-gray-700">Domain Overview</h3>
@@ -110,7 +131,7 @@ tailwind.config = {
     <div id="domainBars" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
     <div id="facetDetails" class="space-y-6"></div>
     <div id="careerMatch" class="bg-white shadow-lg rounded-3xl p-8 border border-stone-200/60 slide-up"></div>
-    <p class="text-center text-xs text-gray-400 pb-8">Johnson, J. A. (2014). IPIP-NEO-120. Journal of Research in Personality, 51, 78-89. Public domain.</p>
+    <p class="text-center text-xs text-gray-400 pb-8">Reference: Johnson, J. A. (2014). IPIP-NEO-120. Journal of Research in Personality, 51, 78-89.</p>
   </div>
 </div>
 
@@ -296,6 +317,16 @@ const shortLabels = ["VI","I","N","A","VA"];
 
 let current = 0;
 let answers = new Array(TOTAL).fill(null); // indexed by ORIGINAL item index
+let latestResults = null;
+let radarChartInstance = null;
+
+document.addEventListener('keydown', (e) => {
+  if(document.getElementById('quiz').classList.contains('hidden')) return;
+  const key = e.key;
+  if(key >= '1' && key <= '5') selectOption(parseInt(key, 10));
+  if(key === 'ArrowRight') nextQ();
+  if(key === 'ArrowLeft') prevQ();
+});
 
 const domainMeta = {
   N: {name:"Neuroticism",color:"#ef4444",bg:"bg-red-50",text:"text-red-700",border:"border-red-200",barBg:"bg-red-500"},
@@ -338,6 +369,9 @@ function renderQ(){
   const pct = Math.round(((current+1)/TOTAL)*100);
   document.getElementById("progressLabel").innerText = `${current+1} of ${TOTAL}`;
   document.getElementById("progressPercent").innerText = `${pct}%`;
+  const remaining = TOTAL - (current + 1);
+  const etaMins = Math.max(1, Math.round((remaining * 7.5) / 60));
+  document.getElementById("etaLabel").innerText = `~${etaMins} min left`;
   document.getElementById("progressBar").style.width = pct+"%";
   document.getElementById("prevBtn").style.visibility = current===0?"hidden":"visible";
   document.getElementById("nextBtn").innerText = current===TOTAL-1?"Calculate Results":"Next →";
@@ -417,6 +451,7 @@ function calculateResults(){
     facetPercentiles[f] = zToP(z);
   }
 
+  latestResults = { domainPercentiles, domainScores };
   renderRadar(domainPercentiles);
   renderDomainBars(domainPercentiles, domainScores);
   renderFacetDetails(domainPercentiles, facetScores, facetPercentiles);
@@ -426,7 +461,8 @@ function calculateResults(){
 /* ===================== RADAR ===================== */
 function renderRadar(pcts){
   const order=["O","C","E","A","N"];
-  new Chart(document.getElementById("radarChart"),{
+  if(radarChartInstance) radarChartInstance.destroy();
+  radarChartInstance = new Chart(document.getElementById("radarChart"),{
     type:'radar',
     data:{
       labels:order.map(d=>domainMeta[d].name),
@@ -516,6 +552,28 @@ function renderCareer(pcts){
       ${careers.map(c=>`<div class="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm font-medium text-gray-700">${c}</div>`).join("")}
     </div>
     <p class="text-xs text-gray-400 mt-4">Career suggestions are illustrative. Consider facet-level scores for more nuanced matching.</p>`;
+}
+
+function copySummary(){
+  if(!latestResults) return;
+  const order=["N","E","O","A","C"];
+  const summary = order.map(d => `${domainMeta[d].name}: ${latestResults.domainPercentiles[d]}th percentile (raw ${latestResults.domainScores[d]})`).join("\n");
+  navigator.clipboard.writeText(`PsycheMetrics IPIP-NEO-120 Summary\n${summary}`).then(() => {
+    const btn = document.getElementById('copySummaryBtn');
+    if(!btn) return;
+    const original = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(()=>btn.textContent=original,1200);
+  });
+}
+
+function downloadChartPng(){
+  const canvas = document.getElementById('radarChart');
+  if(!canvas) return;
+  const link = document.createElement('a');
+  link.download = 'psychemetrics-ipip-radar.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 }
 </script>
 </body>
