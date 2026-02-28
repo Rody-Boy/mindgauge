@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>General Self-Efficacy (GSE) — MindGauge</title>
+<title>General Self-Efficacy (GSE) — PsycheMetrics</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
 <script>
 tailwind.config = {
@@ -28,16 +30,16 @@ tailwind.config = {
 </head>
 <body class="bg-stone-50 text-gray-800 min-h-screen">
 
-<!-- MindGauge Nav -->
+<!-- PsycheMetrics Nav -->
 <div class="fixed top-0 left-0 right-0 z-50 bg-white/70 border-b border-stone-200/60" style="backdrop-filter:blur(16px);">
   <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
     <a href="index.html" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-900 transition">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
-      Back to MindGauge
+      Back to PsycheMetrics
     </a>
     <a href="index.html" class="flex items-center gap-2">
       <div class="w-6 h-6 rounded-md bg-gray-900 flex items-center justify-center"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
-      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">MindGauge</span>
+      <span class="font-bold text-sm text-gray-900" style="font-family:Fraunces,serif">PsycheMetrics</span>
     </a>
   </div>
 </div>
@@ -94,7 +96,23 @@ tailwind.config = {
   <div class="max-w-3xl mx-auto space-y-6">
     <div class="text-center mb-4 slide-up">
       <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Your Self-Efficacy Profile</h2>
-      <p class="text-gray-400">Based on the General Self-Efficacy Scale (GSE)</p>
+      <p class="text-gray-400 mb-4">Based on the General Self-Efficacy Scale (GSE)</p>
+      <div class="no-export flex flex-wrap justify-center items-center gap-3">
+        <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Print / Save PDF</button>
+        <button onclick="exportResultsPdf(this)" class="export-pdf-btn px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Export Results PDF</button>
+        <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Copy Summary</button>
+        <button onclick="downloadChartPng(this)" class="export-png-btn px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Export Results PNG</button>
+        <select id="exportScale" class="px-3 py-2 rounded-xl border border-stone-200 text-xs text-gray-600 bg-white">
+          <option value="1.5">Standard</option>
+          <option value="2" selected>High</option>
+          <option value="3">Ultra</option>
+        </select>
+        <select id="exportMode" class="px-3 py-2 rounded-xl border border-stone-200 text-xs text-gray-600 bg-white">
+          <option value="full" selected>Full report</option>
+          <option value="summary">Executive summary</option>
+        </select>
+        <label class="text-xs text-gray-500 inline-flex items-center gap-2"><input id="exportIncludeNotes" type="checkbox" checked>Include notes</label>
+      </div>
     </div>
 
     <!-- Score Gauge -->
@@ -136,6 +154,8 @@ const likertLabels = ["Not at all true", "Hardly true", "Moderately true", "Exac
 
 let current = 0;
 let answers = new Array(10).fill(null);
+let latestResults = null;
+let barChartInstance = null;
 
 /* ===================== QUIZ LOGIC ===================== */
 function startQuiz() {
@@ -193,6 +213,7 @@ function calculateResults() {
   const z = (totalScore - popMean) / popSD;
   const percentile = zToPercentile(z);
 
+  latestResults = { totalScore, percentile };
   renderGauge(totalScore, percentile);
   renderBarChart();
   renderInterpretation(totalScore, percentile);
@@ -240,7 +261,8 @@ function renderGauge(score, percentile) {
 /* ===================== BAR CHART ===================== */
 function renderBarChart() {
   const labels = questions.map((q,i) => `Q${i+1}`);
-  new Chart(document.getElementById("barChart"), {
+  if(barChartInstance) barChartInstance.destroy();
+  barChartInstance = new Chart(document.getElementById("barChart"), {
     type: 'bar',
     data: {
       labels: labels,
@@ -324,6 +346,161 @@ function renderHRInsights(score, percentile) {
     </div>
     <p class="text-xs text-gray-400 mt-4">Self-efficacy is malleable. Bandura (1977) identified four sources: mastery experiences, vicarious learning, verbal persuasion, and physiological states.</p>
   `;
+}
+
+function copySummary() {
+  if(!latestResults) return;
+  const summary = `Total score: ${latestResults.totalScore}/40\nPercentile: ${latestResults.percentile}th`;
+  navigator.clipboard.writeText(`PsycheMetrics GSE Summary\n${summary}`).then(() => {
+    const btn = document.getElementById('copySummaryBtn');
+    if(!btn) return;
+    const orig = btn.textContent;
+    btn.textContent='Copied';
+    setTimeout(()=>btn.textContent=orig,1200);
+  });
+}
+
+
+async function captureResultsCanvas(config = {}) {
+  const source = document.querySelector('#results > div');
+  if(!source) return null;
+
+  const mode = config.mode || 'full';
+  const includeNotes = config.includeNotes !== false;
+  const scale = Number(config.scale || 2);
+
+  const clone = source.cloneNode(true);
+  clone.querySelectorAll('.no-export').forEach(el => el.remove());
+
+  if(!includeNotes) {
+    clone.querySelectorAll('p.text-xs, p.text-gray-400, .text-gray-400').forEach(el => {
+      if(el.textContent && el.textContent.length > 40) el.remove();
+    });
+  }
+
+  if(mode === 'summary') {
+    const blocks = [...clone.children];
+    blocks.forEach((el, idx) => {
+      if(idx > 3) el.remove();
+    });
+  }
+
+  const heading = document.createElement('div');
+  heading.style.padding = '12px 0 16px';
+  heading.style.borderBottom = '1px solid #e7e5e4';
+  heading.style.marginBottom = '16px';
+  heading.innerHTML = `<div style="font-family:DM Sans,sans-serif;font-size:12px;color:#78716c">PsycheMetrics</div><div style="font-family:DM Sans,sans-serif;font-size:22px;font-weight:700;color:#111827">GSE Results</div><div style="font-family:DM Sans,sans-serif;font-size:11px;color:#9ca3af">Generated ${new Date().toLocaleString()}</div>`;
+  clone.prepend(heading);
+
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise(r => setTimeout(r, 80));
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-99999px';
+  wrapper.style.top = '0';
+  wrapper.style.width = Math.max(source.offsetWidth, 960) + 'px';
+  wrapper.style.background = '#fff';
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  const canvas = await html2canvas(clone, {
+    scale,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    windowWidth: clone.scrollWidth
+  });
+
+  wrapper.remove();
+  return canvas;
+}
+
+function exportFileStamp() {
+  const d = new Date();
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function getExportConfig() {
+  const scale = parseFloat(document.getElementById('exportScale')?.value || '2');
+  const mode = document.getElementById('exportMode')?.value || 'full';
+  const includeNotes = document.getElementById('exportIncludeNotes')?.checked ?? true;
+  return { scale, mode, includeNotes };
+}
+
+function setExportBusy(btn, busy, labelBusy) {
+  if(!btn) return;
+  if(busy) {
+    btn.dataset.original = btn.textContent;
+    btn.textContent = labelBusy;
+    btn.disabled = true;
+    btn.style.opacity = '0.65';
+  } else {
+    btn.textContent = btn.dataset.original || btn.textContent;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+async function exportResultsPdf(btn) {
+  const config = getExportConfig();
+  try {
+    setExportBusy(btn, true, 'Preparing PDF...');
+    const canvas = await captureResultsCanvas(config);
+    if(!canvas) return;
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 24;
+    const imgWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pageInnerHeight = pageHeight - margin * 2;
+
+    const imgData = canvas.toDataURL('image/png');
+    let heightLeft = imgHeight;
+    let position = margin;
+
+    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pageInnerHeight;
+
+    while (heightLeft > 0) {
+      pdf.addPage();
+      position = margin - (imgHeight - heightLeft);
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageInnerHeight;
+    }
+
+    pdf.save(`psychemetrics-gse-${config.mode}-${exportFileStamp()}.pdf`);
+  } catch(e) {
+    alert('Export failed. Please try again.');
+  } finally {
+    setExportBusy(btn, false, 'Preparing PDF...');
+  }
+}
+
+async function exportResultsPng(btn) {
+  const config = getExportConfig();
+  try {
+    setExportBusy(btn, true, 'Preparing PNG...');
+    const canvas = await captureResultsCanvas(config);
+    if(!canvas) return;
+    const link = document.createElement('a');
+    link.download = `psychemetrics-gse-${config.mode}-${exportFileStamp()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('Export failed. Please try again.');
+  } finally {
+    setExportBusy(btn, false, 'Preparing PNG...');
+  }
+}
+
+function downloadChartPng(btn) {
+  exportResultsPng(btn);
 }
 </script>
 </body>
