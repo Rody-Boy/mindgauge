@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics — Client-Safe Demo</title>
+  <meta name="description" content="Client-safe PsycheMetrics demo with mock assessment and mock reporting. No production instruments are exposed." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .fade-in { animation: fadeIn .4s ease; }
+    @keyframes fadeIn { from {opacity: 0; transform: translateY(6px);} to {opacity: 1; transform: translateY(0);} }
+  </style>
+</head>
+<body class="bg-stone-50 text-gray-800 min-h-screen">
+  <main class="max-w-5xl mx-auto px-6 py-10">
+    <header class="bg-white border border-stone-200 rounded-3xl p-8 mb-8">
+      <p class="text-xs uppercase tracking-widest text-emerald-700 font-bold">Client-safe preview</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-2">PsycheMetrics Interactive Demo</h1>
+      <p class="text-gray-600 mt-3 max-w-3xl">
+        This page is designed for external stakeholders. It demonstrates the product flow with <strong>mock questions</strong> and a <strong>simulated report</strong>, without exposing production assessments or real reporting exports.
+      </p>
+      <div class="mt-4 inline-flex items-center gap-2 text-xs px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+        <span>🔒</span>
+        <span>No links to real instruments, no access to live reports.</span>
+      </div>
+    </header>
+
+    <section id="intro" class="bg-white border border-stone-200 rounded-3xl p-8 fade-in">
+      <h2 class="text-2xl font-bold text-gray-900 mb-3">How this demo works</h2>
+      <ul class="space-y-2 text-gray-600 list-disc pl-6">
+        <li>Answer a short 5-question mock check-in.</li>
+        <li>Instantly view a simulated dashboard and recommendations.</li>
+        <li>Use this experience to evaluate UX/fit for your team.</li>
+      </ul>
+      <button id="startBtn" class="mt-6 px-5 py-3 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-700 transition">Start Mock Assessment</button>
+    </section>
+
+    <section id="assessment" class="hidden bg-white border border-stone-200 rounded-3xl p-8 mt-8 fade-in">
+      <div class="flex justify-between items-center gap-4 mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Mock Team Readiness Check</h2>
+        <p id="progressText" class="text-sm text-gray-500">Question 1 of 5</p>
+      </div>
+      <p id="questionText" class="text-lg font-medium text-gray-800 mb-6"></p>
+      <div id="options" class="grid md:grid-cols-5 gap-3"></div>
+      <div class="mt-6 flex justify-between">
+        <button id="prevBtn" class="px-4 py-2 rounded-xl border border-stone-200 text-gray-700 hover:border-gray-400 transition" disabled>Back</button>
+        <button id="nextBtn" class="px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-700 transition" disabled>Next</button>
+      </div>
+    </section>
+
+    <section id="results" class="hidden mt-8 space-y-6 fade-in">
+      <div class="bg-white border border-stone-200 rounded-3xl p-8">
+        <h2 class="text-3xl font-bold text-gray-900">Mock Results Dashboard</h2>
+        <p class="text-gray-500 mt-2">Simulated output for stakeholder preview (not a validated psychometric score).</p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Print / Save PDF</button>
+          <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Copy Summary</button>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-white border border-stone-200 rounded-2xl p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Overall readiness</p>
+          <p id="overallScore" class="text-3xl font-extrabold text-gray-900 mt-1">0%</p>
+        </div>
+        <div class="bg-white border border-stone-200 rounded-2xl p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Engagement signal</p>
+          <p id="engagementScore" class="text-3xl font-extrabold text-indigo-700 mt-1">0%</p>
+        </div>
+        <div class="bg-white border border-stone-200 rounded-2xl p-5">
+          <p class="text-xs text-gray-500 uppercase tracking-wider">Adoption confidence</p>
+          <p id="adoptionScore" class="text-3xl font-extrabold text-emerald-700 mt-1">0%</p>
+        </div>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-3xl p-8">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Mock profile overview</h3>
+        <div class="max-w-lg mx-auto">
+          <canvas id="mockChart"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-white border border-stone-200 rounded-3xl p-8">
+        <h3 class="text-lg font-bold text-gray-900 mb-3">Suggested next steps (sample)</h3>
+        <ul id="recommendations" class="list-disc pl-6 text-gray-700 space-y-2"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const questions = [
+      'Our team has a clear process for giving feedback.',
+      'Managers regularly discuss growth and career goals.',
+      'We can spot burnout risk early.',
+      'People understand how success is measured.',
+      'Cross-team collaboration is smooth and predictable.'
+    ];
+
+    const labels = [
+      {value: 1, text: 'Strongly Disagree'},
+      {value: 2, text: 'Disagree'},
+      {value: 3, text: 'Neutral'},
+      {value: 4, text: 'Agree'},
+      {value: 5, text: 'Strongly Agree'}
+    ];
+
+    let current = 0;
+    let answers = new Array(questions.length).fill(null);
+    let chartInstance = null;
+
+    const intro = document.getElementById('intro');
+    const assessment = document.getElementById('assessment');
+    const results = document.getElementById('results');
+    const questionText = document.getElementById('questionText');
+    const options = document.getElementById('options');
+    const progressText = document.getElementById('progressText');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      intro.classList.add('hidden');
+      assessment.classList.remove('hidden');
+      renderQuestion();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (current > 0) {
+        current -= 1;
+        renderQuestion();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (answers[current] === null) return;
+      if (current < questions.length - 1) {
+        current += 1;
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    });
+
+    function renderQuestion() {
+      questionText.textContent = questions[current];
+      progressText.textContent = `Question ${current + 1} of ${questions.length}`;
+      prevBtn.disabled = current === 0;
+      nextBtn.textContent = current === questions.length - 1 ? 'View Mock Report' : 'Next';
+      nextBtn.disabled = answers[current] === null;
+
+      options.innerHTML = '';
+      labels.forEach((label) => {
+        const btn = document.createElement('button');
+        const active = answers[current] === label.value;
+        btn.className = `p-3 rounded-xl border text-sm transition ${active ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-stone-200 hover:border-gray-400'}`;
+        btn.textContent = label.text;
+        btn.onclick = () => {
+          answers[current] = label.value;
+          renderQuestion();
+        };
+        options.appendChild(btn);
+      });
+    }
+
+    function showResults() {
+      assessment.classList.add('hidden');
+      results.classList.remove('hidden');
+
+      const avg = answers.reduce((a, b) => a + b, 0) / answers.length;
+      const overall = Math.round((avg / 5) * 100);
+      const engagement = Math.max(35, Math.min(95, Math.round(overall * 0.92 + 6)));
+      const adoption = Math.max(30, Math.min(95, Math.round(overall * 0.88 + 10)));
+
+      document.getElementById('overallScore').textContent = `${overall}%`;
+      document.getElementById('engagementScore').textContent = `${engagement}%`;
+      document.getElementById('adoptionScore').textContent = `${adoption}%`;
+
+      const recs = [];
+      if (overall < 55) {
+        recs.push('Start with a lightweight pilot team and a monthly manager check-in cadence.');
+        recs.push('Prioritize baseline alignment on success metrics before rollout.');
+      } else if (overall < 75) {
+        recs.push('Run a 4-week pilot with weekly pulse feedback to validate adoption.');
+        recs.push('Enable manager coaching prompts to strengthen consistency.');
+      } else {
+        recs.push('Proceed with phased rollout and add leadership dashboards for visibility.');
+        recs.push('Use quarterly norming sessions to sustain calibration quality.');
+      }
+      recs.push('Note: This is a mock report for demo/testing only.');
+
+      const recList = document.getElementById('recommendations');
+      recList.innerHTML = recs.map(item => `<li>${item}</li>`).join('');
+
+      const data = [
+        Math.round(overall * 0.9),
+        Math.round(engagement),
+        Math.round(adoption),
+        Math.round(overall * 0.82 + 8),
+        Math.round(overall * 0.87 + 5)
+      ];
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(document.getElementById('mockChart').getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: ['Clarity', 'Engagement', 'Adoption', 'Consistency', 'Momentum'],
+          datasets: [{
+            label: 'Mock Profile',
+            data,
+            backgroundColor: 'rgba(79,70,229,0.2)',
+            borderColor: 'rgba(79,70,229,1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(79,70,229,1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 20 } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function copySummary() {
+      const summary = [
+        'PsycheMetrics Client-Safe Demo Summary',
+        `Overall readiness: ${document.getElementById('overallScore').textContent}`,
+        `Engagement signal: ${document.getElementById('engagementScore').textContent}`,
+        `Adoption confidence: ${document.getElementById('adoptionScore').textContent}`,
+        'This is a simulated output for evaluation only.'
+      ].join('\n');
+
+      navigator.clipboard.writeText(summary).then(() => {
+        const btn = document.getElementById('copySummaryBtn');
+        const original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = original; }, 1200);
+      });
+    }
+  </script>
+</body>
+</html>
