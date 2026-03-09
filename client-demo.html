@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics — Interactive Experience</title>
+  <meta name="description" content="PsycheMetrics interactive experience with guided assessment flow, results dashboard, and actionable recommendations." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0f172a;
+      --brand: #4f46e5;
+      --brand-soft: #eef2ff;
+      --good: #059669;
+      --warn: #d97706;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: radial-gradient(circle at 20% 0%, #f5f3ff 0%, #fafaf9 38%, #ffffff 100%); }
+    .glass { background: rgba(255, 255, 255, 0.86); backdrop-filter: blur(10px); }
+    .fade-in { animation: fadeIn .35s ease; }
+    @keyframes fadeIn { from {opacity: 0; transform: translateY(6px);} to {opacity: 1; transform: translateY(0);} }
+    .chip { border: 1px solid #e7e5e4; border-radius: 9999px; padding: .35rem .75rem; font-size: .75rem; color: #57534e; background: #fff; }
+    .option-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen">
+  <main class="max-w-6xl mx-auto px-5 py-8 md:py-12">
+    <header class="glass border border-stone-200/70 rounded-3xl p-7 md:p-10 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="inline-flex items-center gap-2 text-xs text-indigo-700 font-bold uppercase tracking-[0.16em]">
+          <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+          PsycheMetrics Experience
+        </div>
+        <div class="inline-flex items-center gap-2">
+          <span class="chip">Fast to explore</span>
+          <span class="chip">Actionable report</span>
+          <span class="chip">Ready to share</span>
+        </div>
+      </div>
+
+      <h1 class="text-3xl md:text-5xl font-extrabold text-slate-900 mt-4 leading-tight">Assess Team Readiness with a Clear, Executive-Friendly Experience</h1>
+      <p class="text-slate-600 mt-4 max-w-3xl text-base md:text-lg">
+        Complete a short guided check-in, review a polished dashboard, and capture a concise summary for stakeholders.
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-3 mt-6">
+        <div class="bg-white border border-stone-200 rounded-2xl p-4">
+          <p class="text-xs uppercase text-slate-500 tracking-wider">Step 1</p>
+          <p class="font-semibold mt-1">Answer 5 structured prompts</p>
+        </div>
+        <div class="bg-white border border-stone-200 rounded-2xl p-4">
+          <p class="text-xs uppercase text-slate-500 tracking-wider">Step 2</p>
+          <p class="font-semibold mt-1">Review performance signals</p>
+        </div>
+        <div class="bg-white border border-stone-200 rounded-2xl p-4">
+          <p class="text-xs uppercase text-slate-500 tracking-wider">Step 3</p>
+          <p class="font-semibold mt-1">Share with print/copy actions</p>
+        </div>
+      </div>
+    </header>
+
+    <section id="intro" class="glass border border-stone-200/70 rounded-3xl p-8 mt-7 fade-in shadow-sm">
+      <h2 class="text-2xl font-bold text-slate-900">Start assessment</h2>
+      <p class="text-slate-600 mt-2">This walkthrough takes about 1 minute and generates a full report view with recommendations.</p>
+      <div id="resumeWrap" class="hidden mt-4 text-sm text-slate-600">
+        You have an unfinished session saved.
+        <button id="resumeBtn" class="underline text-indigo-700 font-medium">Resume where I left off</button>
+      </div>
+      <button id="startBtn" class="mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 transition">Begin</button>
+    </section>
+
+    <section id="assessment" class="hidden glass border border-stone-200/70 rounded-3xl p-7 md:p-8 mt-7 fade-in shadow-sm">
+      <div class="flex flex-wrap justify-between gap-3 items-center mb-4">
+        <h2 class="text-2xl font-bold text-slate-900">Team Readiness Check</h2>
+        <div class="flex items-center gap-3">
+          <p id="timerText" class="text-sm text-slate-500 font-medium">Elapsed 00:00</p>
+          <button id="pauseTimerBtn" class="px-3 py-1 rounded-lg border border-stone-300 text-xs text-slate-700 hover:border-slate-400">Pause</button>
+          <p id="progressText" class="text-sm text-slate-500">Question 1 of 5</p>
+        </div>
+      </div>
+
+      <div class="w-full h-2 bg-stone-200 rounded-full overflow-hidden mb-6">
+        <div id="progressBar" class="h-2 bg-indigo-600 rounded-full transition-all duration-300" style="width: 20%"></div>
+      </div>
+
+      <p id="questionText" class="text-xl font-semibold text-slate-800 mb-6"></p>
+      <div id="options" class="grid md:grid-cols-5 gap-3"></div>
+
+      <div class="mt-7 flex justify-between">
+        <button id="prevBtn" class="px-4 py-2 rounded-xl border border-stone-300 text-slate-700 hover:border-slate-500 transition" disabled>Back</button>
+        <button id="nextBtn" class="px-5 py-2 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-700 transition" disabled>Next</button>
+      </div>
+    </section>
+
+    <section id="results" class="hidden mt-7 space-y-6 fade-in">
+      <div class="glass border border-stone-200/70 rounded-3xl p-7 md:p-8 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="text-3xl font-bold text-slate-900">Results Dashboard</h2>
+            <p class="text-slate-500 mt-2">A concise snapshot of readiness, engagement, adoption confidence, and next actions.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Print / Save PDF</button>
+            <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Copy Summary</button>
+            <button id="copyLinkBtn" onclick="copyAssessmentLink()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Copy Link</button>
+            <button id="gmailBtn" onclick="sendViaGmail()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Send via Gmail</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <article class="glass border border-stone-200/70 rounded-2xl p-5 shadow-sm">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Overall readiness</p>
+          <p id="overallScore" class="text-4xl font-extrabold text-slate-900 mt-1">0%</p>
+          <p id="overallBand" class="text-xs font-medium mt-2 text-slate-500">Band: —</p>
+        </article>
+        <article class="glass border border-stone-200/70 rounded-2xl p-5 shadow-sm">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Engagement signal</p>
+          <p id="engagementScore" class="text-4xl font-extrabold text-indigo-700 mt-1">0%</p>
+          <p class="text-xs font-medium mt-2 text-slate-500">Pulse stability & sentiment trend</p>
+        </article>
+        <article class="glass border border-stone-200/70 rounded-2xl p-5 shadow-sm">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Adoption confidence</p>
+          <p id="adoptionScore" class="text-4xl font-extrabold text-emerald-700 mt-1">0%</p>
+          <p class="text-xs font-medium mt-2 text-slate-500">Rollout consistency confidence</p>
+        </article>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-4">
+        <div class="glass border border-stone-200/70 rounded-3xl p-7 shadow-sm lg:col-span-3">
+          <h3 class="text-lg font-bold text-slate-900 mb-4">Capability profile</h3>
+          <div class="max-w-xl mx-auto">
+            <canvas id="profileChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass border border-stone-200/70 rounded-3xl p-7 shadow-sm lg:col-span-2">
+          <h3 class="text-lg font-bold text-slate-900 mb-4">Interpretation</h3>
+          <div id="insightCards" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="glass border border-stone-200/70 rounded-3xl p-7 shadow-sm">
+        <h3 class="text-lg font-bold text-slate-900 mb-3">Recommended actions</h3>
+        <ul id="recommendations" class="list-disc pl-6 text-slate-700 space-y-2"></ul>
+      </div>
+
+      <div class="glass border border-stone-200/70 rounded-3xl p-7 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 class="text-lg font-bold text-slate-900">Session notes</h3>
+          <button id="saveNotesBtn" onclick="saveClientNotes()" class="px-3 py-1.5 rounded-lg border border-stone-300 text-sm text-slate-700 hover:border-slate-500">Save Notes</button>
+        </div>
+        <textarea id="sessionNotes" rows="4" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Add observations, decision points, and follow-up actions..."></textarea>
+      </div>
+    </section>
+  </main>
+
+  <div id="toastWrap" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+  <script>
+    const questions = [
+      'Our team has a clear process for giving feedback.',
+      'Managers regularly discuss growth and career goals.',
+      'We can spot burnout risk early.',
+      'People understand how success is measured.',
+      'Cross-team collaboration is smooth and predictable.'
+    ];
+
+    const labels = [
+      { value: 1, text: 'Strongly Disagree' },
+      { value: 2, text: 'Disagree' },
+      { value: 3, text: 'Neutral' },
+      { value: 4, text: 'Agree' },
+      { value: 5, text: 'Strongly Agree' }
+    ];
+
+    let current = 0;
+    let answers = new Array(questions.length).fill(null);
+    let chartInstance = null;
+    let timerInterval = null;
+    let elapsedSeconds = 0;
+    let isTimerPaused = false;
+    let latestSummary = '';
+
+    const STORAGE_KEY = 'psychemetrics_client_demo_state_v1';
+
+    const intro = document.getElementById('intro');
+    const assessment = document.getElementById('assessment');
+    const results = document.getElementById('results');
+    const questionText = document.getElementById('questionText');
+    const options = document.getElementById('options');
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    const timerText = document.getElementById('timerText');
+    const pauseTimerBtn = document.getElementById('pauseTimerBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const resumeWrap = document.getElementById('resumeWrap');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const notesEl = document.getElementById('sessionNotes');
+
+    loadData();
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      intro.classList.add('hidden');
+      assessment.classList.remove('hidden');
+      startTimer();
+      renderQuestion();
+    });
+
+    pauseTimerBtn.addEventListener('click', pauseTimer);
+
+    resumeBtn.addEventListener('click', () => {
+      intro.classList.add('hidden');
+      assessment.classList.remove('hidden');
+      startTimer();
+      renderQuestion();
+      showToast('Resumed saved session');
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (current > 0) {
+        current -= 1;
+        saveData();
+        renderQuestion();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (answers[current] === null) return;
+      if (current < questions.length - 1) {
+        current += 1;
+        saveData();
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    });
+
+    function renderQuestion() {
+      questionText.textContent = questions[current];
+      progressText.textContent = `Question ${current + 1} of ${questions.length}`;
+      progressBar.style.width = `${((current + 1) / questions.length) * 100}%`;
+      prevBtn.disabled = current === 0;
+      nextBtn.textContent = current === questions.length - 1 ? 'View Report' : 'Next';
+      nextBtn.disabled = answers[current] === null;
+
+      options.innerHTML = '';
+      labels.forEach((label) => {
+        const active = answers[current] === label.value;
+        const btn = document.createElement('button');
+        btn.className = `option-card p-3 rounded-xl border text-sm font-medium transition ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-stone-200 hover:border-slate-400 hover:bg-stone-50'}`;
+        btn.textContent = label.text;
+        btn.type = 'button';
+        btn.onclick = () => {
+          answers[current] = label.value;
+          saveData();
+          renderQuestion();
+        };
+        options.appendChild(btn);
+      });
+    }
+
+    function getBand(score) {
+      if (score >= 75) return { name: 'High', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' };
+      if (score >= 55) return { name: 'Moderate', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' };
+      return { name: 'Developing', color: 'text-rose-700', bg: 'bg-rose-50 border-rose-200' };
+    }
+
+    function showResults() {
+      assessment.classList.add('hidden');
+      results.classList.remove('hidden');
+      stopTimer();
+
+      const avg = answers.reduce((a, b) => a + b, 0) / answers.length;
+      const overall = Math.round((avg / 5) * 100);
+      const engagement = Math.max(35, Math.min(95, Math.round(overall * 0.92 + 6)));
+      const adoption = Math.max(30, Math.min(95, Math.round(overall * 0.88 + 10)));
+      const consistency = Math.round(overall * 0.82 + 8);
+      const momentum = Math.round(overall * 0.87 + 5);
+
+      document.getElementById('overallScore').textContent = `${overall}%`;
+      document.getElementById('engagementScore').textContent = `${engagement}%`;
+      document.getElementById('adoptionScore').textContent = `${adoption}%`;
+
+      const band = getBand(overall);
+      const bandEl = document.getElementById('overallBand');
+      bandEl.className = `inline-flex text-xs font-semibold mt-2 px-2.5 py-1 rounded-full border ${band.bg} ${band.color}`;
+      bandEl.textContent = `Band: ${band.name}`;
+
+      const recommendations = [];
+      if (overall < 55) {
+        recommendations.push('Start with one pilot team and a focused weekly coaching loop for managers.');
+        recommendations.push('Define three measurable success indicators before expanding rollout.');
+        recommendations.push('Use bi-weekly pulse checks to detect friction early and iterate quickly.');
+      } else if (overall < 75) {
+        recommendations.push('Run a 4-week structured rollout with progress reviews every Friday.');
+        recommendations.push('Add targeted enablement for managers to improve score consistency.');
+        recommendations.push('Publish a single-page outcomes dashboard for leadership visibility.');
+      } else {
+        recommendations.push('Proceed with phased expansion and maintain monthly calibration sessions.');
+        recommendations.push('Introduce role-based scorecards to sustain quality and accountability.');
+        recommendations.push('Align engagement rituals with quarterly performance planning cycles.');
+      }
+
+      const recList = document.getElementById('recommendations');
+      recList.innerHTML = recommendations.map(item => `<li>${item}</li>`).join('');
+
+      latestSummary = [
+        'PsycheMetrics Team Readiness Summary',
+        `Overall readiness: ${overall}%`,
+        `Engagement signal: ${engagement}%`,
+        `Adoption confidence: ${adoption}%`,
+        `Readiness band: ${band.name}`,
+        `Assessment duration: ${formatTime(elapsedSeconds)}`
+      ].join('\n');
+
+      const insightCards = document.getElementById('insightCards');
+      const insightData = [
+        { label: 'Clarity', value: Math.round(overall * 0.9), tone: 'indigo' },
+        { label: 'Engagement', value: engagement, tone: 'violet' },
+        { label: 'Adoption', value: adoption, tone: 'emerald' },
+        { label: 'Consistency', value: consistency, tone: 'amber' },
+        { label: 'Momentum', value: momentum, tone: 'sky' }
+      ];
+      insightCards.innerHTML = insightData.map((item) => `
+        <div class="rounded-xl border border-stone-200 bg-white p-3">
+          <div class="flex items-center justify-between text-sm mb-2">
+            <span class="font-semibold text-slate-700">${item.label}</span>
+            <span class="font-bold text-slate-900">${item.value}%</span>
+          </div>
+          <div class="h-2 bg-stone-200 rounded-full overflow-hidden">
+            <div class="h-2 rounded-full bg-slate-800" style="width:${item.value}%"></div>
+          </div>
+        </div>
+      `).join('');
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(document.getElementById('profileChart').getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: ['Clarity', 'Engagement', 'Adoption', 'Consistency', 'Momentum'],
+          datasets: [{
+            label: 'Team Profile',
+            data: [Math.round(overall * 0.9), engagement, adoption, consistency, momentum],
+            backgroundColor: 'rgba(79, 70, 229, 0.18)',
+            borderColor: 'rgba(79, 70, 229, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(79, 70, 229, 1)'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 20 } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      saveData();
+    }
+
+    function copySummary() {
+      const summary = latestSummary || [
+        'PsycheMetrics Team Readiness Summary',
+        `Overall readiness: ${document.getElementById('overallScore').textContent}`,
+        `Engagement signal: ${document.getElementById('engagementScore').textContent}`,
+        `Adoption confidence: ${document.getElementById('adoptionScore').textContent}`,
+        `Readiness band: ${document.getElementById('overallBand').textContent.replace('Band: ', '')}`
+      ].join('\n');
+
+      navigator.clipboard.writeText(summary).then(() => {
+        const btn = document.getElementById('copySummaryBtn');
+        const orig = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = orig; }, 1200);
+        showToast('Summary copied to clipboard');
+      });
+    }
+
+    function copyAssessmentLink() {
+      const payload = encodeURIComponent(latestSummary || 'PsycheMetrics Team Readiness Summary');
+      const url = `${window.location.origin}${window.location.pathname}?report=${payload}`;
+      navigator.clipboard.writeText(url).then(() => showToast('Sharable link copied'));
+    }
+
+    function sendViaGmail() {
+      const body = encodeURIComponent((latestSummary || 'PsycheMetrics Team Readiness Summary') + '\n\nShared from PsycheMetrics interactive experience.');
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent('PsycheMetrics Readiness Summary')}&body=${body}`, '_blank');
+    }
+
+    function saveClientNotes() {
+      saveData();
+      showToast('Notes saved');
+    }
+
+    function startTimer() {
+      if (timerInterval) return;
+      isTimerPaused = false;
+      pauseTimerBtn.textContent = 'Pause';
+      timerInterval = setInterval(() => {
+        elapsedSeconds += 1;
+        timerText.textContent = `Elapsed ${formatTime(elapsedSeconds)}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    function pauseTimer() {
+      if (!timerInterval && isTimerPaused) {
+        startTimer();
+        return;
+      }
+      if (timerInterval) {
+        stopTimer();
+        isTimerPaused = true;
+        pauseTimerBtn.textContent = 'Resume';
+        showToast('Timer paused');
+      } else {
+        isTimerPaused = false;
+        pauseTimerBtn.textContent = 'Pause';
+        startTimer();
+        showToast('Timer resumed');
+      }
+    }
+
+    function formatTime(total) {
+      const m = String(Math.floor(total / 60)).padStart(2, '0');
+      const s = String(total % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function saveData() {
+      const state = {
+        current,
+        answers,
+        elapsedSeconds,
+        notes: notesEl ? notesEl.value : '',
+        hasResults: !results.classList.contains('hidden'),
+        latestSummary
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        if (!state || !Array.isArray(state.answers)) return;
+        answers = state.answers.slice(0, questions.length);
+        current = Math.min(state.current || 0, questions.length - 1);
+        elapsedSeconds = state.elapsedSeconds || 0;
+        latestSummary = state.latestSummary || '';
+        timerText.textContent = `Elapsed ${formatTime(elapsedSeconds)}`;
+        if (notesEl) notesEl.value = state.notes || '';
+        if (!state.hasResults && answers.some(a => a !== null)) resumeWrap.classList.remove('hidden');
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const wrap = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = 'bg-slate-900 text-white text-sm px-3 py-2 rounded-lg shadow';
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 1800);
+    }
+
+    window.addEventListener('beforeunload', saveData);
+  </script>
+</body>
+</html>
