@@ -124,15 +124,6 @@
               <ul id="hrImplications" class="list-disc pl-5 text-sm text-stone-700 space-y-1"></ul>
             </div>
 
-            <div class="rounded-2xl border border-stone-200 bg-white p-4">
-              <h3 class="font-semibold mb-2">Summary</h3>
-              <pre id="detailSummary" class="text-sm text-stone-700 whitespace-pre-wrap"></pre>
-            </div>
-
-            <div class="rounded-2xl border border-stone-200 bg-white p-4">
-              <h3 class="font-semibold mb-2">Raw Results (JSON)</h3>
-              <pre id="detailJson" class="text-xs text-stone-700 whitespace-pre-wrap max-h-64 overflow-auto"></pre>
-            </div>
 
             <div class="rounded-2xl border border-stone-200 bg-white p-4">
               <h3 class="font-semibold mb-2">HR Review Notes</h3>
@@ -307,8 +298,6 @@
       document.getElementById('detailPane').classList.remove('hidden');
       document.getElementById('detailTitle').textContent = sub.assessment || 'Assessment Submission';
       document.getElementById('detailMeta').textContent = `ID: ${sub.id} · Submitted ${new Date(sub.submittedAt).toLocaleString()} · Source: ${sub.page || 'N/A'}`;
-      document.getElementById('detailSummary').textContent = sub.summary || 'No summary';
-      document.getElementById('detailJson').textContent = JSON.stringify(sub.results || {}, null, 2);
       document.getElementById('hrNotes').value = sub.hrNotes || '';
       document.getElementById('reviewStatus').textContent = sub.reviewed ? `Reviewed ${sub.reviewedAt ? '· ' + new Date(sub.reviewedAt).toLocaleString() : ''}` : 'Pending';
       renderResultChart(sub);
