@@ -24,7 +24,22 @@
     @keyframes fadeIn { from {opacity: 0; transform: translateY(6px);} to {opacity: 1; transform: translateY(0);} }
     .chip { border: 1px solid #e7e5e4; border-radius: 9999px; padding: .35rem .75rem; font-size: .75rem; color: #57534e; background: #fff; }
     .option-card:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-  </style>
+
+  @media print {
+    body.print-results-only * { visibility: hidden !important; }
+    body.print-results-only #results,
+    body.print-results-only #results * { visibility: visible !important; }
+    body.print-results-only #results {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 12px !important;
+      background: #fff !important;
+    }
+    body.print-results-only .no-export { display: none !important; }
+  }
+</style>
 </head>
 <body class="text-slate-800 min-h-screen">
   <main class="max-w-6xl mx-auto px-5 py-8 md:py-12">
@@ -103,7 +118,7 @@
             <p class="text-slate-500 mt-2">A concise snapshot of readiness, engagement, adoption confidence, and next actions.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Print / Save PDF</button>
+            <button onclick="printResultsOnly()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Print / Save PDF</button>
             <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Copy Summary</button>
             <button id="copyLinkBtn" onclick="copyAssessmentLink()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Copy Link</button>
             <button id="gmailBtn" onclick="sendViaGmail()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Send via Gmail</button>
@@ -470,6 +485,16 @@
       el.textContent = msg;
       wrap.appendChild(el);
       setTimeout(() => el.remove(), 1800);
+    }
+
+    function printResultsOnly() {
+      if(results.classList.contains('hidden')) {
+        alert('Please complete the assessment first.');
+        return;
+      }
+      document.body.classList.add('print-results-only');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-results-only'), 300);
     }
 
     window.addEventListener('beforeunload', saveData);
