@@ -656,16 +656,34 @@ function openAdminEmailDraft(submission) {
   const participant = submission.participant || {};
   const subject = encodeURIComponent(`Assessment Results: ${submission.assessment} - ${participant.name || 'Participant'}`);
   const body = encodeURIComponent([
-    `Assessment: ${submission.assessment}`,
-    `Participant: ${participant.name || ''}`,
-    `Participant Email: ${participant.email || ''}`,
-    `Applicant ID: ${participant.applicantId || ''}`,
-    `Position/Program: ${participant.position || ''}`,
-    `Company/School: ${participant.organization || ''}`,
-    `Completed: ${new Date(submission.submittedAt).toLocaleString()}`,
+    'PsycheMetrics Assessment Results Notification',
+    '================================================',
     '',
-    'Results Summary:',
-    submission.summary || ''
+    `Assessment: ${submission.assessment}`,
+    `Completion Time: ${new Date(submission.submittedAt).toLocaleString()}`,
+    '',
+    'Participant Information',
+    '----------------------',
+    `Name: ${participant.name || 'N/A'}`,
+    `Email: ${participant.email || 'N/A'}`,
+    `Applicant/Student ID: ${participant.applicantId || 'N/A'}`,
+    `Position/Program: ${participant.position || 'N/A'}`,
+    `Company/School: ${participant.organization || 'N/A'}`,
+    '',
+    'Assessment Summary',
+    '------------------',
+    submission.summary || 'No summary available.',
+    '',
+    'Recommended Follow-up',
+    '---------------------',
+    '1) Review full report and percentile context in the admin console.',
+    '2) Add structured reviewer notes and hiring/development recommendations.',
+    '3) Save this email in the candidate/employee record for audit trail.',
+    '',
+    '—',
+    'Best regards,',
+    'PsycheMetrics Automated Reporting',
+    'For HR / Psychologist / Authorized Personnel'
   ].join('\n'));
   window.location.href = `mailto:${encodeURIComponent(adminEmail)}?subject=${subject}&body=${body}`;
   return true;

@@ -122,7 +122,23 @@
           <p class="font-medium">${a.label}</p>
           <div class="mt-2 flex gap-2">
             <button onclick="copyLink('${url}')" class="px-2 py-1 rounded border border-stone-300 text-xs">Copy link</button>
-            <a href="mailto:${encodeURIComponent(adminEmail)}?subject=${encodeURIComponent('Assessment link: '+a.label)}&body=${encodeURIComponent('Please complete your assessment using this secure link:\n'+url)}" class="px-2 py-1 rounded border border-stone-300 text-xs">Email link</a>
+            <a href="mailto:${encodeURIComponent(adminEmail)}?subject=${encodeURIComponent('PsycheMetrics Assessment Invitation: '+a.label)}&body=${encodeURIComponent([
+              'PsycheMetrics Assessment Invitation',
+              '================================',
+              '',
+              'Hello,',
+              '',
+              `You are invited to complete the following assessment: ${a.label}`,
+              '',
+              `Secure Assessment Link: ${url}`,
+              '',
+              'Please complete the required participant details before you begin the questionnaire.',
+              '',
+              'If you have any issues accessing the link, please contact our HR/Admin team.',
+              '',
+              'Best regards,',
+              'PsycheMetrics Assessment Team'
+            ].join('\n'))}" class="px-2 py-1 rounded border border-stone-300 text-xs">Email link</a>
           </div>
         </div>`;
       }).join('');
