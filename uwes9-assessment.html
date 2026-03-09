@@ -101,6 +101,7 @@ tailwind.config = {
       <div class="no-export flex flex-wrap justify-center items-center gap-3">
         <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Print / Save PDF</button>
         <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Copy Summary</button>
+        <button id="submitHrBtn" onclick="submitToHRReview()" class="px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-sm text-indigo-700 hover:bg-indigo-100 transition">Submit to HR Review</button>
       </div>
     </div>
 
@@ -405,6 +406,53 @@ function copySummary() {
   });
 }
 
+
+
+
+function getResultsSummaryText() {
+  if(!latestResults) return null;
+  if(typeof latestResults.summary === 'string' && latestResults.summary.trim()) return latestResults.summary.trim();
+  return Object.entries(latestResults)
+    .filter(([k,v]) => typeof v !== 'object' && typeof v !== 'function')
+    .map(([k,v]) => `${k}: ${v}`)
+    .join('\n');
+}
+
+function submitToHRReview() {
+  if(!latestResults) {
+    alert('Please complete the assessment first.');
+    return;
+  }
+
+  const summary = getResultsSummaryText();
+  const submission = {
+    id: `sub_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+    assessment: document.title.replace('PsycheMetrics — ','').replace(' Assessment',''),
+    submittedAt: new Date().toISOString(),
+    page: window.location.pathname.split('/').pop(),
+    summary,
+    results: latestResults
+  };
+
+  const key = 'psychemetrics_hr_submissions_v1';
+  const existing = JSON.parse(localStorage.getItem(key) || '[]');
+  existing.unshift(submission);
+  localStorage.setItem(key, JSON.stringify(existing));
+
+  const reviewLink = `${window.location.origin}${window.location.pathname.replace(submission.page, 'admin.html')}?submission=${submission.id}`;
+  const btn = document.getElementById('submitHrBtn');
+  const original = btn ? btn.textContent : '';
+
+  navigator.clipboard.writeText(reviewLink).then(() => {
+    if(btn){
+      btn.textContent = 'Submitted + Link Copied';
+      setTimeout(() => btn.textContent = original, 1800);
+    }
+    alert('Submitted to HR inbox. Review link copied to clipboard.');
+  }).catch(() => {
+    alert(`Submitted to HR inbox. Open: ${reviewLink}`);
+  });
+}
 
 </script>
 </body>
