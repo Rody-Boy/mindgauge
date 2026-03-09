@@ -102,6 +102,28 @@
               <canvas id="resultChart" height="110"></canvas>
             </div>
 
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="rounded-2xl border border-stone-200 bg-white p-4">
+                <h3 class="font-semibold mb-2">Subscale Comparison</h3>
+                <div id="subscaleComparison" class="text-sm text-stone-700 space-y-2"></div>
+              </div>
+              <div class="rounded-2xl border border-stone-200 bg-white p-4">
+                <h3 class="font-semibold mb-2">Subscale Breakdown</h3>
+                <div id="subscaleBreakdown" class="text-sm text-stone-700 space-y-2"></div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-stone-200 bg-white p-4">
+              <h3 class="font-semibold mb-2">Interpretation</h3>
+              <div id="interpretationBlock" class="text-sm text-stone-700 leading-relaxed"></div>
+            </div>
+
+            <div class="rounded-2xl border border-stone-200 bg-white p-4">
+              <h3 class="font-semibold mb-2">HR &amp; Workplace Implications</h3>
+              <ul id="hrImplications" class="list-disc pl-5 text-sm text-stone-700 space-y-1"></ul>
+            </div>
+
             <div class="rounded-2xl border border-stone-200 bg-white p-4">
               <h3 class="font-semibold mb-2">Summary</h3>
               <pre id="detailSummary" class="text-sm text-stone-700 whitespace-pre-wrap"></pre>
@@ -229,6 +251,52 @@
       });
     }
 
+
+    function renderInsightSections(sub) {
+      const metrics = extractNumericMetrics(sub.results || {}).filter(m => m.value >= 0);
+      const sorted = [...metrics].sort((a,b) => b.value - a.value);
+      const top = sorted.slice(0, 3);
+      const bottom = sorted.slice(-3).reverse();
+
+      const comparison = document.getElementById('subscaleComparison');
+      comparison.innerHTML = top.length
+        ? top.map(m => `<div class="flex items-center justify-between"><span>${m.label}</span><strong>${m.value}</strong></div>`).join('')
+        : '<p class="text-stone-500">No comparable subscale metrics available.</p>';
+
+      const breakdown = document.getElementById('subscaleBreakdown');
+      breakdown.innerHTML = metrics.length
+        ? metrics.slice(0,8).map(m => `
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1"><span>${m.label}</span><span>${m.value}</span></div>
+              <div class="h-2 bg-stone-200 rounded-full overflow-hidden"><div class="h-2 bg-indigo-600" style="width:${Math.max(4,Math.min(100,m.value))}%"></div></div>
+            </div>
+          `).join('')
+        : '<p class="text-stone-500">No numeric breakdown available.</p>';
+
+      const interpretation = document.getElementById('interpretationBlock');
+      if(top.length) {
+        const strengths = top.map(t => t.label).join(', ');
+        const development = bottom.length ? bottom.map(b => b.label).join(', ') : 'N/A';
+        interpretation.textContent = `The strongest observed subscales are ${strengths}. Potential development focus areas include ${development}. Overall pattern suggests a profile that should be reviewed with role context, team demands, and manager observations before final decisions.`;
+      } else {
+        interpretation.textContent = 'Interpretation is unavailable because the submission does not include structured numeric subscale values.';
+      }
+
+      const implications = document.getElementById('hrImplications');
+      const items = top.length ? [
+        `Prioritize role mapping where strengths in ${top[0].label} can be directly utilized.`,
+        'Use this as one signal in a broader review process with interview and performance evidence.',
+        bottom.length ? `Create development plans targeting ${bottom[0].label} through coaching and manager check-ins.` : 'Establish a 30-day calibration review with manager feedback.',
+        'Reassess after onboarding milestones to track progression against role expectations.'
+      ] : [
+        'Request a more complete structured result payload before formal HR decisions.',
+        'Pair this submission with interview, manager, and performance evidence.',
+        'Use follow-up check-ins to validate interpretation quality over time.'
+      ];
+      implications.innerHTML = items.map(i => `<li>${i}</li>`).join('');
+    }
+
+
     function openSubmission(id){
       const sub = submissions.find(s => s.id === id);
       if(!sub) return;
@@ -244,6 +312,7 @@
       document.getElementById('hrNotes').value = sub.hrNotes || '';
       document.getElementById('reviewStatus').textContent = sub.reviewed ? `Reviewed ${sub.reviewedAt ? '· ' + new Date(sub.reviewedAt).toLocaleString() : ''}` : 'Pending';
       renderResultChart(sub);
+      renderInsightSections(sub);
     }
 
     function saveCurrentSubmission(partial){
