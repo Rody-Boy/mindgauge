@@ -38,6 +38,7 @@
         <input id="hrPasscode" type="password" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Enter HR passcode" />
         <button id="unlockBtn" class="w-full px-4 py-3 rounded-xl bg-stone-900 text-white font-semibold">Unlock HR Console</button>
         <p class="text-xs text-stone-500">Prototype default passcode: <code>HR-ONLY</code></p>
+        <a href="portal.html" class="inline-block text-xs text-indigo-700 underline">Login via Portal</a>
       </div>
     </section>
 
@@ -142,6 +143,7 @@
     const SUBMISSION_KEY = 'psychemetrics_hr_submissions_v1';
     const HR_SESSION_KEY = 'psychemetrics_hr_session';
     const HR_PASSCODE = 'HR-ONLY';
+    const AUTH_SESSION_KEY = 'psychemetrics_auth_session_v1';
 
     let submissions = [];
     let activeId = null;
@@ -160,6 +162,7 @@
       const pass = document.getElementById('hrPasscode').value;
       if(pass !== HR_PASSCODE) return toast('Invalid passcode');
       sessionStorage.setItem(HR_SESSION_KEY, '1');
+      sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({username:'hr',name:'HR Manager',role:'hr'}));
       document.getElementById('authGate').classList.add('hidden');
       document.getElementById('hrConsole').classList.remove('hidden');
       refreshInbox();
@@ -168,6 +171,7 @@
 
     function logoutHR(){
       sessionStorage.removeItem(HR_SESSION_KEY);
+      sessionStorage.removeItem(AUTH_SESSION_KEY);
       document.getElementById('hrConsole').classList.add('hidden');
       document.getElementById('authGate').classList.remove('hidden');
       activeId = null;
@@ -348,7 +352,16 @@
     document.getElementById('unlockBtn').addEventListener('click', unlockHR);
     document.getElementById('searchInput').addEventListener('input', renderSubmissionList);
 
-    if(sessionStorage.getItem(HR_SESSION_KEY) === '1') {
+    const authSessionRaw = sessionStorage.getItem(AUTH_SESSION_KEY);
+    let allowedRole = false;
+    if(authSessionRaw){
+      try {
+        const auth = JSON.parse(authSessionRaw);
+        allowedRole = ['admin','hr'].includes(auth.role);
+      } catch(e) {}
+    }
+
+    if(sessionStorage.getItem(HR_SESSION_KEY) === '1' || allowedRole) {
       document.getElementById('authGate').classList.add('hidden');
       document.getElementById('hrConsole').classList.remove('hidden');
       refreshInbox();

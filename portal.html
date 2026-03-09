@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics Portal</title>
+  <meta name="description" content="Role-based portal for Admin, HR, and Takers." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <style>body{font-family:'DM Sans',sans-serif;background:#faf9f6;color:#24231f}h1,h2,h3{font-family:'Fraunces',serif}</style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    <section id="authView" class="max-w-xl mx-auto bg-white border border-stone-200 rounded-3xl p-8">
+      <h1 class="text-3xl font-bold">PsycheMetrics Portal</h1>
+      <p class="text-stone-500 mt-2">Login as Admin, HR, or Assessment Taker.</p>
+      <div class="mt-4 flex gap-2">
+        <button id="loginTab" class="px-3 py-2 rounded-lg border border-stone-300 text-sm bg-stone-900 text-white">Login</button>
+        <button id="registerTab" class="px-3 py-2 rounded-lg border border-stone-300 text-sm">Register Taker</button>
+      </div>
+
+      <form id="loginForm" class="mt-4 space-y-3">
+        <input id="loginUser" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Username" required />
+        <input id="loginPass" type="password" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Password" required />
+        <button class="w-full py-3 rounded-xl bg-stone-900 text-white font-semibold">Sign In</button>
+        <p class="text-xs text-stone-500">Default accounts: <code>admin/admin123</code>, <code>hr/hr123</code>.</p>
+      </form>
+
+      <form id="registerForm" class="mt-4 space-y-3 hidden">
+        <input id="regName" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Full name" required />
+        <input id="regUser" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Username" required />
+        <input id="regPass" type="password" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Password" required />
+        <button class="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold">Create Taker Account</button>
+      </form>
+      <p id="authMsg" class="mt-3 text-sm text-rose-600"></p>
+    </section>
+
+    <section id="dashboardView" class="hidden space-y-5">
+      <header class="bg-white border border-stone-200 rounded-3xl p-6 flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h2 class="text-3xl font-bold">Role Dashboard</h2>
+          <p id="profileMeta" class="text-stone-500 mt-1"></p>
+        </div>
+        <div class="flex gap-2">
+          <a href="index.html" class="px-4 py-2 rounded-xl border border-stone-300 text-sm">Home</a>
+          <button id="logoutBtn" class="px-4 py-2 rounded-xl border border-stone-300 text-sm">Logout</button>
+        </div>
+      </header>
+
+      <div class="grid lg:grid-cols-12 gap-4">
+        <section class="lg:col-span-5 bg-white border border-stone-200 rounded-3xl p-5">
+          <h3 class="text-xl font-bold mb-3">Profile</h3>
+          <div id="profileCard" class="text-sm text-stone-700"></div>
+        </section>
+        <section class="lg:col-span-7 bg-white border border-stone-200 rounded-3xl p-5">
+          <h3 id="activityTitle" class="text-xl font-bold mb-3">Activity</h3>
+          <div id="activityPane" class="space-y-2 text-sm text-stone-700"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const USERS_KEY='psychemetrics_users_v1';
+    const SESSION_KEY='psychemetrics_auth_session_v1';
+    const ATTEMPTS_KEY='psychemetrics_test_attempts_v1';
+    const SUBMISSIONS_KEY='psychemetrics_hr_submissions_v1';
+
+    function seedUsers(){
+      const users=JSON.parse(localStorage.getItem(USERS_KEY)||'[]');
+      if(users.length) return;
+      localStorage.setItem(USERS_KEY, JSON.stringify([
+        {username:'admin',password:'admin123',name:'System Admin',role:'admin'},
+        {username:'hr',password:'hr123',name:'HR Manager',role:'hr'}
+      ]));
+    }
+
+    function setTab(mode){
+      document.getElementById('loginForm').classList.toggle('hidden', mode!=='login');
+      document.getElementById('registerForm').classList.toggle('hidden', mode!=='register');
+      document.getElementById('loginTab').classList.toggle('bg-stone-900', mode==='login');
+      document.getElementById('loginTab').classList.toggle('text-white', mode==='login');
+      document.getElementById('registerTab').classList.toggle('bg-stone-900', mode==='register');
+      document.getElementById('registerTab').classList.toggle('text-white', mode==='register');
+      document.getElementById('authMsg').textContent='';
+    }
+
+    function openDashboard(session){
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.remove('hidden');
+      document.getElementById('profileMeta').textContent = `${session.name} · ${session.role.toUpperCase()} · ${session.username}`;
+      document.getElementById('profileCard').innerHTML = `
+        <p><strong>Name:</strong> ${session.name}</p>
+        <p><strong>Username:</strong> ${session.username}</p>
+        <p><strong>Role:</strong> ${session.role}</p>
+      `;
+
+      const activity = document.getElementById('activityPane');
+      if(session.role==='taker') {
+        document.getElementById('activityTitle').textContent = 'Tests Taken';
+        const attempts = JSON.parse(localStorage.getItem(ATTEMPTS_KEY)||'[]').filter(a=>a.username===session.username);
+        activity.innerHTML = attempts.length
+          ? attempts.slice(0,25).map(a=>`<div class="rounded-xl border border-stone-200 p-3"><p class="font-semibold">${a.assessment}</p><p class="text-xs text-stone-500">${new Date(a.completedAt).toLocaleString()}</p></div>`).join('')
+          : '<p class="text-stone-500">No tests taken yet.</p>';
+        activity.insertAdjacentHTML('beforeend', `
+          <div class="pt-2">
+            <a class="inline-block px-3 py-2 rounded-lg border border-stone-300" href="gse-assessment.html">Take GSE</a>
+            <a class="inline-block px-3 py-2 rounded-lg border border-stone-300 ml-2" href="grit-s-assessment.html">Take Grit-S</a>
+          </div>`);
+      } else if(session.role==='hr') {
+        document.getElementById('activityTitle').textContent = 'HR Inbox';
+        const subs = JSON.parse(localStorage.getItem(SUBMISSIONS_KEY)||'[]');
+        activity.innerHTML = `<p>Total submissions: <strong>${subs.length}</strong></p><a class="inline-block px-3 py-2 rounded-lg border border-stone-300" href="admin.html">Open HR Review Console</a>`;
+      } else {
+        document.getElementById('activityTitle').textContent = 'Admin Overview';
+        const users = JSON.parse(localStorage.getItem(USERS_KEY)||'[]');
+        const subs = JSON.parse(localStorage.getItem(SUBMISSIONS_KEY)||'[]');
+        const attempts = JSON.parse(localStorage.getItem(ATTEMPTS_KEY)||'[]');
+        activity.innerHTML = `
+          <p>Users: <strong>${users.length}</strong></p>
+          <p>Submissions: <strong>${subs.length}</strong></p>
+          <p>Tests Taken: <strong>${attempts.length}</strong></p>
+          <a class="inline-block px-3 py-2 rounded-lg border border-stone-300" href="admin.html">Open Admin/HR Console</a>
+        `;
+      }
+    }
+
+    function login(e){
+      e.preventDefault();
+      const user=document.getElementById('loginUser').value.trim();
+      const pass=document.getElementById('loginPass').value;
+      const users=JSON.parse(localStorage.getItem(USERS_KEY)||'[]');
+      const found=users.find(u=>u.username===user && u.password===pass);
+      if(!found){ document.getElementById('authMsg').textContent='Invalid credentials'; return; }
+      const session={username:found.username,name:found.name,role:found.role};
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      openDashboard(session);
+    }
+
+    function registerTaker(e){
+      e.preventDefault();
+      const name=document.getElementById('regName').value.trim();
+      const user=document.getElementById('regUser').value.trim();
+      const pass=document.getElementById('regPass').value;
+      const users=JSON.parse(localStorage.getItem(USERS_KEY)||'[]');
+      if(users.some(u=>u.username===user)){ document.getElementById('authMsg').textContent='Username already exists'; return; }
+      users.push({username:user,password:pass,name,role:'taker'});
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      document.getElementById('authMsg').textContent='Taker account created. Please login.';
+      setTab('login');
+    }
+
+    function logout(){ sessionStorage.removeItem(SESSION_KEY); location.reload(); }
+
+    seedUsers();
+    document.getElementById('loginTab').onclick=()=>setTab('login');
+    document.getElementById('registerTab').onclick=()=>setTab('register');
+    document.getElementById('loginForm').addEventListener('submit', login);
+    document.getElementById('registerForm').addEventListener('submit', registerTaker);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    const existing=sessionStorage.getItem(SESSION_KEY);
+    if(existing){
+      try{ openDashboard(JSON.parse(existing)); }catch(e){}
+    }
+  </script>
+</body>
+</html>

@@ -217,6 +217,7 @@ function prevQuestion() { if(current>0) { current--; renderQuestion(); } }
 function calculateResults() {
   document.getElementById("quiz").classList.add("hidden");
   document.getElementById("results").classList.remove("hidden");
+  recordAssessmentCompletion();
   window.scrollTo({top:0,behavior:"smooth"});
 
   // Score each item
@@ -405,6 +406,31 @@ function copySummary() {
 
 
 
+
+function getActiveUser() {
+  try {
+    return JSON.parse(sessionStorage.getItem('psychemetrics_auth_session_v1') || 'null');
+  } catch(e) { return null; }
+}
+
+function recordAssessmentCompletion() {
+  if(window.__completionRecorded) return;
+  window.__completionRecorded = true;
+  const user = getActiveUser();
+  const attemptsKey = 'psychemetrics_test_attempts_v1';
+  const attempts = JSON.parse(localStorage.getItem(attemptsKey) || '[]');
+  attempts.unshift({
+    id: `att_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+    username: user?.username || 'guest',
+    role: user?.role || 'guest',
+    assessment: document.title.replace('PsycheMetrics — ','').replace(' Assessment',''),
+    page: window.location.pathname.split('/').pop(),
+    completedAt: new Date().toISOString(),
+    summary: getResultsSummaryText ? getResultsSummaryText() : ''
+  });
+  localStorage.setItem(attemptsKey, JSON.stringify(attempts));
+}
+
 function getResultsSummaryText() {
   if(!latestResults) return null;
   if(typeof latestResults.summary === 'string' && latestResults.summary.trim()) return latestResults.summary.trim();
@@ -427,7 +453,8 @@ function submitToHRReview() {
     submittedAt: new Date().toISOString(),
     page: window.location.pathname.split('/').pop(),
     summary,
-    results: latestResults
+    results: latestResults,
+    taker: getActiveUser()?.username || 'guest'
   };
 
   const key = 'psychemetrics_hr_submissions_v1';
