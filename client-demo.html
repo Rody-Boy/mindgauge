@@ -65,13 +65,21 @@
     <section id="intro" class="glass border border-stone-200/70 rounded-3xl p-8 mt-7 fade-in shadow-sm">
       <h2 class="text-2xl font-bold text-slate-900">Start assessment</h2>
       <p class="text-slate-600 mt-2">This walkthrough takes about 1 minute and generates a full report view with recommendations.</p>
+      <div id="resumeWrap" class="hidden mt-4 text-sm text-slate-600">
+        You have an unfinished session saved.
+        <button id="resumeBtn" class="underline text-indigo-700 font-medium">Resume where I left off</button>
+      </div>
       <button id="startBtn" class="mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 transition">Begin</button>
     </section>
 
     <section id="assessment" class="hidden glass border border-stone-200/70 rounded-3xl p-7 md:p-8 mt-7 fade-in shadow-sm">
       <div class="flex flex-wrap justify-between gap-3 items-center mb-4">
         <h2 class="text-2xl font-bold text-slate-900">Team Readiness Check</h2>
-        <p id="progressText" class="text-sm text-slate-500">Question 1 of 5</p>
+        <div class="flex items-center gap-3">
+          <p id="timerText" class="text-sm text-slate-500 font-medium">Elapsed 00:00</p>
+          <button id="pauseTimerBtn" class="px-3 py-1 rounded-lg border border-stone-300 text-xs text-slate-700 hover:border-slate-400">Pause</button>
+          <p id="progressText" class="text-sm text-slate-500">Question 1 of 5</p>
+        </div>
       </div>
 
       <div class="w-full h-2 bg-stone-200 rounded-full overflow-hidden mb-6">
@@ -97,6 +105,8 @@
           <div class="flex flex-wrap gap-2">
             <button onclick="window.print()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Print / Save PDF</button>
             <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Copy Summary</button>
+            <button id="copyLinkBtn" onclick="copyAssessmentLink()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Copy Link</button>
+            <button id="gmailBtn" onclick="sendViaGmail()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-slate-700 hover:text-slate-900 hover:border-slate-400 transition">Send via Gmail</button>
           </div>
         </div>
       </div>
@@ -137,8 +147,18 @@
         <h3 class="text-lg font-bold text-slate-900 mb-3">Recommended actions</h3>
         <ul id="recommendations" class="list-disc pl-6 text-slate-700 space-y-2"></ul>
       </div>
+
+      <div class="glass border border-stone-200/70 rounded-3xl p-7 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h3 class="text-lg font-bold text-slate-900">Session notes</h3>
+          <button id="saveNotesBtn" onclick="saveClientNotes()" class="px-3 py-1.5 rounded-lg border border-stone-300 text-sm text-slate-700 hover:border-slate-500">Save Notes</button>
+        </div>
+        <textarea id="sessionNotes" rows="4" class="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Add observations, decision points, and follow-up actions..."></textarea>
+      </div>
     </section>
   </main>
+
+  <div id="toastWrap" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
   <script>
     const questions = [
@@ -160,6 +180,12 @@
     let current = 0;
     let answers = new Array(questions.length).fill(null);
     let chartInstance = null;
+    let timerInterval = null;
+    let elapsedSeconds = 0;
+    let isTimerPaused = false;
+    let latestSummary = '';
+
+    const STORAGE_KEY = 'psychemetrics_client_demo_state_v1';
 
     const intro = document.getElementById('intro');
     const assessment = document.getElementById('assessment');
@@ -168,18 +194,37 @@
     const options = document.getElementById('options');
     const progressText = document.getElementById('progressText');
     const progressBar = document.getElementById('progressBar');
+    const timerText = document.getElementById('timerText');
+    const pauseTimerBtn = document.getElementById('pauseTimerBtn');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const resumeWrap = document.getElementById('resumeWrap');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const notesEl = document.getElementById('sessionNotes');
+
+    loadData();
 
     document.getElementById('startBtn').addEventListener('click', () => {
       intro.classList.add('hidden');
       assessment.classList.remove('hidden');
+      startTimer();
       renderQuestion();
+    });
+
+    pauseTimerBtn.addEventListener('click', pauseTimer);
+
+    resumeBtn.addEventListener('click', () => {
+      intro.classList.add('hidden');
+      assessment.classList.remove('hidden');
+      startTimer();
+      renderQuestion();
+      showToast('Resumed saved session');
     });
 
     prevBtn.addEventListener('click', () => {
       if (current > 0) {
         current -= 1;
+        saveData();
         renderQuestion();
       }
     });
@@ -188,6 +233,7 @@
       if (answers[current] === null) return;
       if (current < questions.length - 1) {
         current += 1;
+        saveData();
         renderQuestion();
       } else {
         showResults();
@@ -211,6 +257,7 @@
         btn.type = 'button';
         btn.onclick = () => {
           answers[current] = label.value;
+          saveData();
           renderQuestion();
         };
         options.appendChild(btn);
@@ -226,6 +273,7 @@
     function showResults() {
       assessment.classList.add('hidden');
       results.classList.remove('hidden');
+      stopTimer();
 
       const avg = answers.reduce((a, b) => a + b, 0) / answers.length;
       const overall = Math.round((avg / 5) * 100);
@@ -260,6 +308,15 @@
 
       const recList = document.getElementById('recommendations');
       recList.innerHTML = recommendations.map(item => `<li>${item}</li>`).join('');
+
+      latestSummary = [
+        'PsycheMetrics Team Readiness Summary',
+        `Overall readiness: ${overall}%`,
+        `Engagement signal: ${engagement}%`,
+        `Adoption confidence: ${adoption}%`,
+        `Readiness band: ${band.name}`,
+        `Assessment duration: ${formatTime(elapsedSeconds)}`
+      ].join('\n');
 
       const insightCards = document.getElementById('insightCards');
       const insightData = [
@@ -301,10 +358,12 @@
           plugins: { legend: { display: false } }
         }
       });
+
+      saveData();
     }
 
     function copySummary() {
-      const summary = [
+      const summary = latestSummary || [
         'PsycheMetrics Team Readiness Summary',
         `Overall readiness: ${document.getElementById('overallScore').textContent}`,
         `Engagement signal: ${document.getElementById('engagementScore').textContent}`,
@@ -317,8 +376,103 @@
         const orig = btn.textContent;
         btn.textContent = 'Copied';
         setTimeout(() => { btn.textContent = orig; }, 1200);
+        showToast('Summary copied to clipboard');
       });
     }
+
+    function copyAssessmentLink() {
+      const payload = encodeURIComponent(latestSummary || 'PsycheMetrics Team Readiness Summary');
+      const url = `${window.location.origin}${window.location.pathname}?report=${payload}`;
+      navigator.clipboard.writeText(url).then(() => showToast('Sharable link copied'));
+    }
+
+    function sendViaGmail() {
+      const body = encodeURIComponent((latestSummary || 'PsycheMetrics Team Readiness Summary') + '\n\nShared from PsycheMetrics interactive experience.');
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent('PsycheMetrics Readiness Summary')}&body=${body}`, '_blank');
+    }
+
+    function saveClientNotes() {
+      saveData();
+      showToast('Notes saved');
+    }
+
+    function startTimer() {
+      if (timerInterval) return;
+      isTimerPaused = false;
+      pauseTimerBtn.textContent = 'Pause';
+      timerInterval = setInterval(() => {
+        elapsedSeconds += 1;
+        timerText.textContent = `Elapsed ${formatTime(elapsedSeconds)}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    function pauseTimer() {
+      if (!timerInterval && isTimerPaused) {
+        startTimer();
+        return;
+      }
+      if (timerInterval) {
+        stopTimer();
+        isTimerPaused = true;
+        pauseTimerBtn.textContent = 'Resume';
+        showToast('Timer paused');
+      } else {
+        isTimerPaused = false;
+        pauseTimerBtn.textContent = 'Pause';
+        startTimer();
+        showToast('Timer resumed');
+      }
+    }
+
+    function formatTime(total) {
+      const m = String(Math.floor(total / 60)).padStart(2, '0');
+      const s = String(total % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function saveData() {
+      const state = {
+        current,
+        answers,
+        elapsedSeconds,
+        notes: notesEl ? notesEl.value : '',
+        hasResults: !results.classList.contains('hidden'),
+        latestSummary
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        if (!state || !Array.isArray(state.answers)) return;
+        answers = state.answers.slice(0, questions.length);
+        current = Math.min(state.current || 0, questions.length - 1);
+        elapsedSeconds = state.elapsedSeconds || 0;
+        latestSummary = state.latestSummary || '';
+        timerText.textContent = `Elapsed ${formatTime(elapsedSeconds)}`;
+        if (notesEl) notesEl.value = state.notes || '';
+        if (!state.hasResults && answers.some(a => a !== null)) resumeWrap.classList.remove('hidden');
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const wrap = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = 'bg-slate-900 text-white text-sm px-3 py-2 rounded-lg shadow';
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 1800);
+    }
+
+    window.addEventListener('beforeunload', saveData);
   </script>
 </body>
 </html>
