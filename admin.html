@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics Admin Workspace</title>
+  <meta name="description" content="PsycheMetrics Admin Workspace for session management, comparative summaries, reporting workflows, and team operations." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#24231f; --bg:#faf9f6; --line:#e7e5e4; --indigo:#4f46e5; }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink)}
+    h1,h2,h3,h4{font-family:'Fraunces',serif}
+    .glass{background:rgba(255,255,255,.9);backdrop-filter:blur(10px)}
+    .pill{border:1px solid var(--line);border-radius:9999px;padding:.2rem .65rem;font-size:.75rem}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-7xl mx-auto px-5 py-8 md:py-10 space-y-6">
+    <header class="glass border border-stone-200 rounded-3xl p-6 md:p-8">
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">Operations</p>
+          <h1 class="text-3xl md:text-4xl font-bold mt-2">PsycheMetrics Admin Workspace</h1>
+          <p class="text-stone-500 mt-2">Manage sessions, compare outcomes, and produce operational reports.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="index.html" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-stone-700 hover:border-stone-400">Back to Site</a>
+          <a href="client-demo.html" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-stone-700 hover:border-stone-400">Open Demo</a>
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2 text-stone-600">
+        <span class="pill">Comparative Summary</span>
+        <span class="pill">Batch Print</span>
+        <span class="pill">Session Search</span>
+        <span class="pill">Preset Manager</span>
+        <span class="pill">Audit Trail</span>
+      </div>
+    </header>
+
+    <section class="grid lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-4 glass border border-stone-200 rounded-3xl p-5">
+        <h2 class="text-xl font-bold mb-3">Sessions</h2>
+        <div class="space-y-3">
+          <label class="sr-only" for="homeSessionSearch">Search sessions</label>
+          <input id="homeSessionSearch" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Search session, owner, or team" />
+          <div class="flex gap-2 text-xs" role="tablist" aria-label="Session filters">
+            <button onclick="filterHomeSessions('all')" class="px-3 py-1.5 rounded-lg border border-stone-300">All</button>
+            <button onclick="filterHomeSessions('active')" class="px-3 py-1.5 rounded-lg border border-stone-300">Active</button>
+            <button onclick="filterHomeSessions('draft')" class="px-3 py-1.5 rounded-lg border border-stone-300">Draft</button>
+          </div>
+          <div id="sessionList" class="space-y-2 max-h-[420px] overflow-auto" role="listbox" aria-label="Session results"></div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-8 space-y-4">
+        <div id="reportWrap" class="glass border border-stone-200 rounded-3xl p-5 hidden" aria-live="polite">
+          <div class="flex flex-wrap justify-between items-start gap-3">
+            <div>
+              <h2 id="reportTitle" class="text-2xl font-bold">Report</h2>
+              <p id="reportMeta" class="text-sm text-stone-500 mt-1"></p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="copyLink()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Copy Link</button>
+              <button onclick="sendViaGmail()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Send via Gmail</button>
+              <button onclick="showPrintGate()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Print</button>
+              <button onclick="releaseReport()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Release</button>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
+            <label for="benchmarkSelect" class="text-stone-600">Benchmark:</label>
+            <select id="benchmarkSelect" class="rounded-lg border border-stone-300 px-2 py-1 text-sm">
+              <option value="global">Global (65)</option>
+              <option value="enterprise">Enterprise (70)</option>
+              <option value="midmarket">Mid-market (62)</option>
+              <option value="startup">Startup (58)</option>
+            </select>
+          </div>
+
+          <div class="mt-4 grid md:grid-cols-2 gap-4">
+            <div class="rounded-2xl border border-stone-200 p-4 bg-white">
+              <h3 class="font-semibold mb-2">Comparative Summary</h3>
+              <div id="comparativeSummary" class="text-sm text-stone-700 space-y-1"></div>
+            </div>
+            <div class="rounded-2xl border border-stone-200 p-4 bg-white">
+              <h3 class="font-semibold mb-2">Session Notes</h3>
+              <textarea id="sessionNotes" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" rows="5" placeholder="Add notes..."></textarea>
+              <button onclick="saveSessionNotes()" class="mt-2 px-3 py-1.5 rounded-lg border border-stone-300 text-sm">Save Notes</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass border border-stone-200 rounded-3xl p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="text-xl font-bold">Batch Clients</h2>
+            <div class="flex gap-2">
+              <button onclick="printBatchSummary()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Print Batch Summary</button>
+              <button onclick="openSavePreset()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Preset Manager</button>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="sr-only" for="clientSearchInput">Search clients</label>
+              <input id="clientSearchInput" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm mb-2" placeholder="Search clients" />
+              <div class="flex gap-2 text-xs mb-2">
+                <button onclick="filterClientCards('all')" class="px-3 py-1 rounded-lg border border-stone-300">All</button>
+                <button onclick="filterClientCards('selected')" class="px-3 py-1 rounded-lg border border-stone-300">Selected</button>
+                <button onclick="setClientView('cards')" class="px-3 py-1 rounded-lg border border-stone-300">Cards</button>
+                <button onclick="setClientView('table')" class="px-3 py-1 rounded-lg border border-stone-300">Table</button>
+              </div>
+              <div id="clientCards" class="space-y-2 max-h-[360px] overflow-auto"></div>
+              <div id="clientTableWrap" class="hidden max-h-[360px] overflow-auto rounded-xl border border-stone-200 bg-white">
+                <table class="w-full text-sm">
+                  <thead class="bg-stone-50 text-stone-600">
+                    <tr><th class="text-left px-3 py-2">Client</th><th class="text-left px-3 py-2">Segment</th><th class="text-left px-3 py-2">Score</th><th class="text-left px-3 py-2">State</th></tr>
+                  </thead>
+                  <tbody id="clientTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-stone-200 p-4 bg-white">
+              <h3 class="font-semibold mb-3">Outcome Distribution</h3>
+              <canvas id="opsChart"></canvas>
+              <div class="mt-4 text-sm text-stone-600" id="batchStats"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass border border-stone-200 rounded-3xl p-5">
+          <h2 class="text-xl font-bold mb-3">Audit Trail</h2>
+          <div id="auditTrail" class="space-y-2 text-sm text-stone-600 max-h-48 overflow-auto"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="printGate" class="hidden fixed inset-0 z-40 bg-black/40" role="dialog" aria-modal="true" aria-labelledby="printGateTitle">
+    <div class="max-w-md mx-auto mt-32 bg-white rounded-2xl p-5 border border-stone-200" tabindex="-1" id="printGatePanel">
+      <h3 id="printGateTitle" class="text-lg font-bold">Confirm Print</h3>
+      <p class="text-sm text-stone-600 mt-1">Print current report and mark print gate as acknowledged.</p>
+      <div class="mt-4 flex justify-end gap-2">
+        <button id="printCancelBtn" onclick="dismissPrintGate()" class="px-3 py-2 rounded-lg border border-stone-300 text-sm">Cancel</button>
+        <button id="printNowBtn" onclick="printAndDismissGate()" class="px-3 py-2 rounded-lg bg-stone-900 text-white text-sm">Print Now</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="presetModal" class="hidden fixed inset-0 z-40 bg-black/40" role="dialog" aria-modal="true" aria-labelledby="presetModalTitle">
+    <div class="max-w-xl mx-auto mt-20 bg-white rounded-2xl p-5 border border-stone-200" tabindex="-1" id="presetPanel">
+      <div class="flex items-center justify-between gap-3">
+        <h3 id="presetModalTitle" class="text-lg font-bold">Preset Manager</h3>
+        <button onclick="closePresetModal()" class="px-2 py-1 rounded border border-stone-300 text-xs">Close</button>
+      </div>
+      <div class="mt-3 flex gap-2">
+        <input id="newPresetName" class="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm" placeholder="Preset name" />
+        <button onclick="saveNewPresetFromInput()" class="px-3 py-2 rounded-lg bg-stone-900 text-white text-sm">Save Current Selection</button>
+      </div>
+      <div id="presetList" class="mt-4 space-y-2 max-h-64 overflow-auto"></div>
+    </div>
+  </div>
+
+  <div id="toastWrap" class="fixed top-4 right-4 z-50 space-y-2" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = 'psychemetrics_admin_state_v2';
+    const LEGACY_KEY = 'psychemetrics_admin_state_v1';
+    let opsChart = null;
+    let activeSessionId = null;
+    let clientView = 'cards';
+    let releaseUndoTimer = null;
+
+    const benchmarkMap = { global:65, enterprise:70, midmarket:62, startup:58 };
+
+    const sessions = [
+      {id:'s1',name:'Retail Ops Pilot',owner:'Ava',status:'active',industry:'Retail',readiness:72,engagement:69,adoption:74,updated:'2026-03-08',released:false},
+      {id:'s2',name:'Support Team Calibration',owner:'Noah',status:'draft',industry:'SaaS',readiness:58,engagement:61,adoption:55,updated:'2026-03-07',released:false},
+      {id:'s3',name:'Leadership Cohort',owner:'Mia',status:'active',industry:'Health',readiness:81,engagement:78,adoption:83,updated:'2026-03-06',released:false}
+    ];
+
+    const clients = [
+      {id:'c1',name:'Northwind',segment:'Enterprise',selected:true,score:78},
+      {id:'c2',name:'Bluepeak',segment:'Mid-Market',selected:false,score:62},
+      {id:'c3',name:'Acero Labs',segment:'SMB',selected:true,score:71},
+      {id:'c4',name:'Brightline',segment:'Enterprise',selected:false,score:66},
+      {id:'c5',name:'Yardly',segment:'SMB',selected:true,score:74}
+    ];
+
+    const audit = [];
+
+    function ts() { return new Date().toLocaleTimeString(); }
+    function pushAudit(msg){ audit.unshift(`[${ts()}] ${msg}`); renderAudit(); }
+    function renderAudit(){ document.getElementById('auditTrail').innerHTML = audit.slice(0,30).map(i=>`<div class="rounded-lg bg-white border border-stone-200 px-3 py-2">${i}</div>`).join('') || '<p class="text-stone-500">No actions yet.</p>'; }
+
+    function showToast(msg, actionText, actionFn){
+      const wrap=document.getElementById('toastWrap');
+      const t=document.createElement('div');
+      t.className='bg-stone-900 text-white text-sm px-3 py-2 rounded-lg shadow flex items-center gap-2';
+      const span=document.createElement('span'); span.textContent=msg; t.appendChild(span);
+      if(actionText && actionFn){
+        const btn=document.createElement('button');
+        btn.className='underline text-indigo-200';
+        btn.textContent=actionText;
+        btn.onclick=()=>{actionFn(); t.remove();};
+        t.appendChild(btn);
+      }
+      wrap.appendChild(t);
+      setTimeout(()=>t.remove(),2500);
+    }
+
+    function migrateIfNeeded(){
+      try{
+        if(localStorage.getItem(STORAGE_KEY)) return;
+        const old=localStorage.getItem(LEGACY_KEY);
+        if(old) {
+          const parsed=JSON.parse(old);
+          const migrated={version:2,...parsed};
+          localStorage.setItem(STORAGE_KEY,JSON.stringify(migrated));
+        }
+      }catch(e){}
+    }
+
+    function saveData(){
+      const state={
+        version:2,
+        activeSessionId,
+        clientView,
+        notes:document.getElementById('sessionNotes')?.value||'',
+        released: sessions.reduce((acc,s)=> (acc[s.id]=!!s.released, acc), {}),
+        selectedClients: clients.filter(c=>c.selected).map(c=>c.id),
+        benchmark: document.getElementById('benchmarkSelect')?.value || 'global'
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadData(){
+      try{
+        migrateIfNeeded();
+        const raw=localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const s=JSON.parse(raw);
+        activeSessionId=s.activeSessionId||null;
+        clientView=s.clientView||'cards';
+        document.getElementById('sessionNotes').value=s.notes||'';
+        if(s.benchmark) document.getElementById('benchmarkSelect').value=s.benchmark;
+        if(Array.isArray(s.selectedClients)) clients.forEach(c=>c.selected=s.selectedClients.includes(c.id));
+        if(s.released) sessions.forEach(x=>x.released=!!s.released[x.id]);
+      }catch(e){ showToast('Stored state was invalid; reset to defaults.'); }
+    }
+
+    function filterHomeSessions(status){
+      const q=(document.getElementById('homeSessionSearch').value||'').toLowerCase();
+      const list=sessions.filter(s=>
+        (status==='all'||s.status===status) && (`${s.name} ${s.owner} ${s.industry}`.toLowerCase().includes(q))
+      );
+      renderSessions(list);
+    }
+
+    function searchSessions(){ filterHomeSessions('all'); }
+
+    function renderSessions(list){
+      const wrap=document.getElementById('sessionList');
+      wrap.innerHTML=list.map((s,idx)=>`
+        <button role="option" aria-selected="${activeSessionId===s.id}" tabindex="0" data-session-id="${s.id}" class="session-item w-full text-left rounded-xl border p-3 ${activeSessionId===s.id?'border-indigo-300 bg-indigo-50':'border-stone-200 bg-white'} hover:border-stone-400">
+          <div class="flex justify-between items-center"><span class="font-semibold text-sm">${s.name}</span><span class="text-xs uppercase ${s.released?'text-emerald-600':'text-stone-500'}">${s.released?'released':s.status}</span></div>
+          <div class="text-xs text-stone-500 mt-1">${s.owner} · ${s.industry} · Updated ${s.updated}</div>
+        </button>
+      `).join('') || '<p class="text-sm text-stone-500">No matching sessions.</p>';
+
+      wrap.querySelectorAll('.session-item').forEach(btn=>{
+        btn.addEventListener('click', ()=>openReport(btn.dataset.sessionId));
+        btn.addEventListener('keydown', (e)=>{
+          if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openReport(btn.dataset.sessionId); }
+        });
+      });
+    }
+
+    function openReport(id){
+      const s=sessions.find(x=>x.id===id); if(!s) return;
+      activeSessionId=id;
+      document.getElementById('reportWrap').classList.remove('hidden');
+      document.getElementById('reportTitle').textContent=s.name;
+      document.getElementById('reportMeta').textContent=`Owner: ${s.owner} · ${s.industry} · Updated ${s.updated}`;
+      renderComparativeSummary(s);
+      renderSessions(sessions);
+      updateUrl();
+      saveData();
+      pushAudit(`Opened report ${s.name}`);
+      showToast('Report opened');
+    }
+
+    function renderComparativeSummary(s){
+      const bench = benchmarkMap[document.getElementById('benchmarkSelect').value] || 65;
+      const delta = s.readiness - bench;
+      const selectedSessions = sessions.filter(x=>x.id!==s.id && x.status==='active');
+      const peerAvg = selectedSessions.length ? Math.round(selectedSessions.reduce((a,b)=>a+b.readiness,0)/selectedSessions.length) : bench;
+      const pct = Math.max(1, Math.min(99, Math.round((s.readiness/100)*100)));
+      document.getElementById('comparativeSummary').innerHTML = `
+        <p>Readiness: <strong>${s.readiness}%</strong> (${delta>=0?'+':''}${delta}% vs benchmark ${bench})</p>
+        <p>Peer active-session avg: <strong>${peerAvg}%</strong></p>
+        <p>Engagement: <strong>${s.engagement}%</strong></p>
+        <p>Adoption confidence: <strong>${s.adoption}%</strong></p>
+        <p>Estimated percentile band: <strong>P${pct}</strong></p>
+      `;
+    }
+
+    function releaseReport(){
+      if(!activeSessionId) return;
+      const s=sessions.find(x=>x.id===activeSessionId);
+      if(!s) return;
+      if(!confirm(`Release report for "${s.name}"?`)) return;
+      s.released=true;
+      renderSessions(sessions);
+      saveData();
+      pushAudit(`Released report ${s.name}`);
+      clearTimeout(releaseUndoTimer);
+      showToast('Report released', 'Undo', () => {
+        s.released=false;
+        renderSessions(sessions);
+        saveData();
+        pushAudit(`Undo release ${s.name}`);
+      });
+      releaseUndoTimer = setTimeout(()=>{}, 5000);
+    }
+
+    let lastFocused = null;
+    function showPrintGate(){
+      lastFocused = document.activeElement;
+      const modal=document.getElementById('printGate');
+      modal.classList.remove('hidden');
+      document.getElementById('printGatePanel').focus();
+      pushAudit('Opened print gate');
+    }
+    function dismissPrintGate(){
+      document.getElementById('printGate').classList.add('hidden');
+      if(lastFocused && lastFocused.focus) lastFocused.focus();
+    }
+    function printAndDismissGate(){ window.print(); dismissPrintGate(); showToast('Print initiated'); pushAudit('Printed current report'); }
+
+    function printBatchSummary(){
+      if(!confirm('Print batch summary for selected clients?')) return;
+      window.print(); showToast('Batch summary printed'); pushAudit('Printed batch summary');
+    }
+
+    function saveSessionNotes(){ saveData(); showToast('Session notes saved'); pushAudit('Saved session notes'); }
+    function saveClientNotes(){ saveSessionNotes(); }
+    function saveInlineClient(){ showToast('Inline client changes saved'); pushAudit('Saved inline client edit'); }
+    function saveEditClient(){ showToast('Client edit saved'); pushAudit('Saved client edit'); }
+
+    function copyLink(){
+      const url=`${location.origin}${location.pathname}?session=${activeSessionId||''}`;
+      navigator.clipboard.writeText(url).then(()=>{showToast('Link copied'); pushAudit('Copied report link');});
+    }
+    function copyAssessmentLink(){ copyLink(); }
+    function copyLinkByCode(){ copyLink(); }
+
+    function sendViaGmail(){
+      const subject=encodeURIComponent('PsycheMetrics Admin Report');
+      const body=encodeURIComponent(`Session: ${activeSessionId||'N/A'}\n\nShared from Admin Workspace.`);
+      const gmail=`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`;
+      const w=window.open(gmail,'_blank');
+      if(!w) {
+        window.location.href=`mailto:?subject=${subject}&body=${body}`;
+        showToast('Using mail fallback');
+      } else {
+        showToast('Opened Gmail compose');
+      }
+      pushAudit('Triggered email share');
+    }
+    function gmailLink(){ sendViaGmail(); }
+    function gmailLinkAndMark(){ sendViaGmail(); releaseReport(); }
+
+    function toggleBatchClient(id){
+      const c=clients.find(x=>x.id===id); if(!c) return;
+      c.selected=!c.selected;
+      saveData();
+      renderClientCards();
+      renderBatchProgress();
+      pushAudit(`${c.selected?'Selected':'Unselected'} client ${c.name}`);
+    }
+
+    function setClientView(mode){
+      clientView = mode;
+      document.getElementById('clientCards').classList.toggle('hidden', mode==='table');
+      document.getElementById('clientTableWrap').classList.toggle('hidden', mode!=='table');
+      renderClientCards();
+      saveData();
+    }
+
+    function filterClientCards(mode){
+      const q=(document.getElementById('clientSearchInput').value||'').toLowerCase();
+      filterClientList(mode,q);
+    }
+
+    function filterClientList(mode='all', q=''){
+      const list=clients.filter(c=>(mode==='all'||c.selected) && `${c.name} ${c.segment}`.toLowerCase().includes(q));
+      const wrap=document.getElementById('clientCards');
+      wrap.innerHTML=list.map(c=>`
+        <div class="rounded-xl border border-stone-200 bg-white p-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-semibold text-sm">${c.name}</p>
+              <p class="text-xs text-stone-500">${c.segment} · Score ${c.score}%</p>
+            </div>
+            <button onclick="toggleBatchClient('${c.id}')" class="px-2 py-1 rounded-lg border text-xs ${c.selected?'border-emerald-300 bg-emerald-50 text-emerald-700':'border-stone-300 text-stone-600'}">${c.selected?'Selected':'Select'}</button>
+          </div>
+        </div>
+      `).join('') || '<p class="text-sm text-stone-500">No matching clients.</p>';
+
+      document.getElementById('clientTableBody').innerHTML = list.map(c=>`<tr class="border-t border-stone-200"><td class="px-3 py-2">${c.name}</td><td class="px-3 py-2">${c.segment}</td><td class="px-3 py-2">${c.score}%</td><td class="px-3 py-2"><button onclick="toggleBatchClient('${c.id}')" class="text-xs underline">${c.selected?'Selected':'Select'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="px-3 py-3 text-stone-500">No matching clients.</td></tr>';
+    }
+
+    function renderBatchProgress(){
+      const selected=clients.filter(c=>c.selected);
+      const avg=selected.length?Math.round(selected.reduce((a,c)=>a+c.score,0)/selected.length):0;
+      document.getElementById('batchStats').innerHTML=`Selected clients: <strong>${selected.length}</strong><br>Average score: <strong>${avg}%</strong>`;
+      const labels=['Selected','Unselected'];
+      const data=[selected.length, clients.length-selected.length];
+      if(opsChart) opsChart.destroy();
+      opsChart=new Chart(document.getElementById('opsChart').getContext('2d'),{
+        type:'doughnut',
+        data:{labels,datasets:[{data,backgroundColor:['#2563eb','#d6d3d1']}]},
+        options:{plugins:{legend:{position:'bottom'}}}
+      });
+    }
+
+    function getPresets(){ return JSON.parse(localStorage.getItem('psychemetrics_admin_presets')||'[]'); }
+    function setPresets(p){ localStorage.setItem('psychemetrics_admin_presets',JSON.stringify(p)); }
+
+    function openSavePreset(){
+      document.getElementById('presetModal').classList.remove('hidden');
+      document.getElementById('presetPanel').focus();
+      renderPresetList();
+    }
+    function closePresetModal(){ document.getElementById('presetModal').classList.add('hidden'); }
+
+    function saveNewPreset(name){
+      const presets=getPresets();
+      presets.push({name,selected:clients.filter(c=>c.selected).map(c=>c.id),ts:Date.now()});
+      setPresets(presets);
+      showToast(`Preset saved: ${name}`);
+      pushAudit(`Saved preset ${name}`);
+      renderPresetList();
+    }
+    function saveNewPresetFromInput(){
+      const name=(document.getElementById('newPresetName').value||'').trim();
+      if(!name) return showToast('Preset name required');
+      saveNewPreset(name);
+      document.getElementById('newPresetName').value='';
+    }
+
+    function launchPreset(name){
+      const p=getPresets().find(x=>x.name===name); if(!p) return;
+      clients.forEach(c=>c.selected=p.selected.includes(c.id));
+      renderClientCards();
+      renderBatchProgress();
+      saveData();
+      showToast(`Preset launched: ${name}`);
+      pushAudit(`Launched preset ${name}`);
+    }
+    function deletePreset(name){
+      if(!confirm(`Delete preset "${name}"?`)) return;
+      setPresets(getPresets().filter(p=>p.name!==name));
+      renderPresetList();
+      showToast(`Deleted preset: ${name}`);
+      pushAudit(`Deleted preset ${name}`);
+    }
+    function renderPresetList(){
+      const list=getPresets();
+      document.getElementById('presetList').innerHTML = list.map(p=>`
+        <div class="rounded-xl border border-stone-200 p-3 flex items-center justify-between">
+          <div>
+            <p class="font-semibold text-sm">${p.name}</p>
+            <p class="text-xs text-stone-500">${p.selected.length} selected · ${new Date(p.ts).toLocaleString()}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="launchPreset('${p.name.replace(/'/g,"\\'")}')" class="px-2 py-1 rounded border border-stone-300 text-xs">Launch</button>
+            <button onclick="deletePreset('${p.name.replace(/'/g,"\\'")}')" class="px-2 py-1 rounded border border-stone-300 text-xs">Delete</button>
+          </div>
+        </div>
+      `).join('') || '<p class="text-sm text-stone-500">No saved presets.</p>';
+    }
+
+    function blockCopy(){ showToast('Action blocked by policy'); }
+
+    function updateUrl(){
+      const u=new URL(location.href);
+      if(activeSessionId) u.searchParams.set('session',activeSessionId); else u.searchParams.delete('session');
+      history.replaceState({},'',u.toString());
+    }
+
+    function bootFromUrl(){
+      const id=new URL(location.href).searchParams.get('session');
+      if(id && sessions.some(s=>s.id===id)) openReport(id);
+    }
+
+    function onGlobalKey(e){
+      if(e.key==='Escape') {
+        dismissPrintGate();
+        closePresetModal();
+      }
+    }
+
+    function init(){
+      loadData();
+      renderSessions(sessions);
+      setClientView(clientView);
+      renderClientCards();
+      renderBatchProgress();
+      renderAudit();
+      document.getElementById('homeSessionSearch').addEventListener('input', searchSessions);
+      document.getElementById('clientSearchInput').addEventListener('input', () => filterClientCards('all'));
+      document.getElementById('sessionNotes').addEventListener('input', saveData);
+      document.getElementById('benchmarkSelect').addEventListener('change', () => {
+        const s=sessions.find(x=>x.id===activeSessionId);
+        if(s) renderComparativeSummary(s);
+        saveData();
+      });
+      document.addEventListener('keydown', onGlobalKey);
+      bootFromUrl();
+      if(activeSessionId && !document.getElementById('reportWrap').classList.contains('hidden')) {
+        const s=sessions.find(x=>x.id===activeSessionId); if(s) renderComparativeSummary(s);
+      }
+    }
+
+    init();
+    window.addEventListener('beforeunload', saveData);
+  </script>
+</body>
+</html>
