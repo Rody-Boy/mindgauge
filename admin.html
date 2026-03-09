@@ -32,7 +32,7 @@
     <section id="authGate" class="max-w-lg mx-auto glass border border-stone-200 rounded-3xl p-8">
       <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">Restricted Access</p>
       <h1 class="text-3xl font-bold mt-2">HR Manager Login</h1>
-      <p class="text-stone-500 mt-2">Only HR managers can access submitted assessment records.</p>
+      <p class="text-stone-500 mt-2">Only authorized administrators can access submitted assessment records.</p>
       <div class="mt-5 space-y-3">
         <label class="text-sm font-medium text-stone-700" for="hrPasscode">Passcode</label>
         <input id="hrPasscode" type="password" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Enter HR passcode" />
@@ -48,7 +48,7 @@
           <div>
             <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">HR Team View</p>
             <h1 class="text-3xl md:text-4xl font-bold mt-2">PsycheMetrics Submission Inbox</h1>
-            <p class="text-stone-500 mt-2">Review submitted assessments, notes, and outcomes sent by users.</p>
+            <p class="text-stone-500 mt-2">Review submitted assessments, participant details, notes, and outcomes.</p>
           </div>
           <div class="flex items-center gap-2">
             <span id="inboxCount" class="px-3 py-2 rounded-xl border border-stone-200 text-xs text-stone-600">0 submissions</span>
@@ -75,6 +75,7 @@
               <div>
                 <h2 id="detailTitle" class="text-2xl font-bold"></h2>
                 <p id="detailMeta" class="text-sm text-stone-500 mt-1"></p>
+                <p id="detailParticipant" class="text-sm text-stone-600 mt-1"></p>
               </div>
               <div class="flex gap-2">
                 <button onclick="copySubmission()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Copy</button>
@@ -302,6 +303,8 @@
       document.getElementById('detailPane').classList.remove('hidden');
       document.getElementById('detailTitle').textContent = sub.assessment || 'Assessment Submission';
       document.getElementById('detailMeta').textContent = `ID: ${sub.id} · Submitted ${new Date(sub.submittedAt).toLocaleString()} · Source: ${sub.page || 'N/A'}`;
+      const p = sub.participant || {};
+      document.getElementById('detailParticipant').textContent = `Participant: ${p.name || 'N/A'} · ${p.email || 'N/A'} · ${p.applicantId || 'No ID'} · ${p.position || 'No role'} · ${p.organization || 'No org'}`;
       document.getElementById('hrNotes').value = sub.hrNotes || '';
       document.getElementById('reviewStatus').textContent = sub.reviewed ? `Reviewed ${sub.reviewedAt ? '· ' + new Date(sub.reviewedAt).toLocaleString() : ''}` : 'Pending';
       renderResultChart(sub);
@@ -336,6 +339,11 @@
       const text = [
         `Assessment: ${s.assessment}`,
         `Submitted: ${new Date(s.submittedAt).toLocaleString()}`,
+        `Participant: ${s.participant?.name || 'N/A'} (${s.participant?.email || 'N/A'})`,
+        `Applicant ID: ${s.participant?.applicantId || 'N/A'}`,
+        `Position/Program: ${s.participant?.position || 'N/A'}`,
+        `Company/School: ${s.participant?.organization || 'N/A'}`,
+        `Admin Delivery: ${s.deliveryStatus || 'N/A'} ${s.adminEmail ? 'to ' + s.adminEmail : ''}`,
         `Summary:\n${s.summary || 'N/A'}`,
         `HR Notes:\n${s.hrNotes || 'N/A'}`
       ].join('\n\n');
@@ -357,7 +365,7 @@
     if(authSessionRaw){
       try {
         const auth = JSON.parse(authSessionRaw);
-        allowedRole = ['admin','hr'].includes(auth.role);
+        allowedRole = ['admin','hr','psychologist'].includes(auth.role);
       } catch(e) {}
     }
 

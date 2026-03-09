@@ -77,6 +77,13 @@ tailwind.config = {
       <p class="text-gray-400 text-sm mb-8">
         8 questions · ~2 minutes · Developed by Angela Duckworth & Patrick Quinn (2009). Two subscales: Consistency of Interest + Perseverance of Effort.
       </p>
+            <div class="grid md:grid-cols-2 gap-3 mb-6 text-sm">
+        <input id="participantName" class="rounded-xl border border-stone-300 px-4 py-3" placeholder="Participant full name" required>
+        <input id="participantEmail" type="email" class="rounded-xl border border-stone-300 px-4 py-3" placeholder="Participant email" required>
+        <input id="participantId" class="rounded-xl border border-stone-300 px-4 py-3" placeholder="Applicant/Student ID" required>
+        <input id="participantPosition" class="rounded-xl border border-stone-300 px-4 py-3" placeholder="Position / Program" required>
+        <input id="participantOrg" class="md:col-span-2 rounded-xl border border-stone-300 px-4 py-3" placeholder="Company / School" required>
+      </div>
       <button onclick="startQuiz()" class="bg-amber-600 text-white px-8 py-4 rounded-2xl hover:bg-amber-700 transition font-medium text-lg shadow-lg shadow-amber-200">
         Begin Assessment →
       </button>
@@ -116,7 +123,7 @@ tailwind.config = {
       <div class="no-export flex flex-wrap justify-center items-center gap-3">
         <button onclick="printResultsOnly()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Print / Save PDF</button>
         <button id="copySummaryBtn" onclick="copySummary()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-gray-700 hover:text-gray-900 hover:border-gray-400 transition">Copy Summary</button>
-        <button id="submitHrBtn" onclick="submitToHRReview()" class="px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-sm text-indigo-700 hover:bg-indigo-100 transition">Submit to HR Review</button>
+        <button id="submitHrBtn" onclick="submitToHRReview()" class="px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-sm text-indigo-700 hover:bg-indigo-100 transition">Send Results to Administrator</button>
       </div>
     </div>
 
@@ -174,6 +181,7 @@ let radarChartInstance = null;
 
 /* ===================== QUIZ LOGIC ===================== */
 function startQuiz() {
+  if(!saveParticipantInfo()) return;
   document.getElementById("landing").classList.add("hidden");
   document.getElementById("quiz").classList.remove("hidden");
   renderQuestion();
@@ -218,6 +226,7 @@ function calculateResults() {
   document.getElementById("quiz").classList.add("hidden");
   document.getElementById("results").classList.remove("hidden");
   recordAssessmentCompletion();
+  submitToHRReview();
   window.scrollTo({top:0,behavior:"smooth"});
 
   // Score each item
@@ -380,7 +389,7 @@ function renderHRInsights(total, ci, pe) {
   if(pe<ci) insights.push({title:"Resilience Building",desc:"Stable interests but lower effort through obstacles — coaching on persistence strategies may help."});
 
   document.getElementById("hrInsights").innerHTML = `
-    <h3 class="text-lg font-bold mb-4 text-gray-700">HR & Workplace Implications</h3>
+    <h3 class="text-lg font-bold mb-4 text-gray-700">Administrator Insights</h3>
     <div class="grid gap-3">
       ${insights.map(i => `<div class="p-3 rounded-xl bg-gray-50 border border-gray-200">
         <p class="font-semibold text-gray-700 text-sm">${i.title}</p>
@@ -407,22 +416,44 @@ function copySummary() {
 
 
 
-function getActiveUser() {
-  try {
-    return JSON.parse(sessionStorage.getItem('psychemetrics_auth_session_v1') || 'null');
-  } catch(e) { return null; }
+
+const PARTICIPANT_KEY = 'psychemetrics_active_participant_v1';
+
+function getParticipantInfo() {
+  try { return JSON.parse(sessionStorage.getItem(PARTICIPANT_KEY) || 'null'); }
+  catch(e) { return null; }
+}
+
+function saveParticipantInfo() {
+  const participant = {
+    name: document.getElementById('participantName')?.value.trim(),
+    email: document.getElementById('participantEmail')?.value.trim(),
+    applicantId: document.getElementById('participantId')?.value.trim(),
+    position: document.getElementById('participantPosition')?.value.trim(),
+    organization: document.getElementById('participantOrg')?.value.trim()
+  };
+  const missing = Object.entries(participant).filter(([,v]) => !v).map(([k]) => k);
+  if(missing.length) {
+    alert('Please complete all required participant details before starting.');
+    return false;
+  }
+  sessionStorage.setItem(PARTICIPANT_KEY, JSON.stringify(participant));
+  return true;
+}
+
+function getAdminEmailFromLink() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('adminEmail') || localStorage.getItem('psychemetrics_admin_notification_email') || '';
 }
 
 function recordAssessmentCompletion() {
   if(window.__completionRecorded) return;
   window.__completionRecorded = true;
-  const user = getActiveUser();
   const attemptsKey = 'psychemetrics_test_attempts_v1';
   const attempts = JSON.parse(localStorage.getItem(attemptsKey) || '[]');
   attempts.unshift({
     id: `att_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
-    username: user?.username || 'guest',
-    role: user?.role || 'guest',
+    participant: getParticipantInfo(),
     assessment: document.title.replace('PsycheMetrics — ','').replace(' Assessment',''),
     page: window.location.pathname.split('/').pop(),
     completedAt: new Date().toISOString(),
@@ -440,9 +471,36 @@ function getResultsSummaryText() {
     .join('\n');
 }
 
+function openAdminEmailDraft(submission) {
+  const adminEmail = getAdminEmailFromLink();
+  if(!adminEmail) return false;
+  const participant = submission.participant || {};
+  const subject = encodeURIComponent(`Assessment Results: ${submission.assessment} - ${participant.name || 'Participant'}`);
+  const body = encodeURIComponent([
+    `Assessment: ${submission.assessment}`,
+    `Participant: ${participant.name || ''}`,
+    `Participant Email: ${participant.email || ''}`,
+    `Applicant ID: ${participant.applicantId || ''}`,
+    `Position/Program: ${participant.position || ''}`,
+    `Company/School: ${participant.organization || ''}`,
+    `Completed: ${new Date(submission.submittedAt).toLocaleString()}`,
+    '',
+    'Results Summary:',
+    submission.summary || ''
+  ].join('\n'));
+  window.location.href = `mailto:${encodeURIComponent(adminEmail)}?subject=${subject}&body=${body}`;
+  return true;
+}
+
 function submitToHRReview() {
   if(!latestResults) {
     alert('Please complete the assessment first.');
+    return;
+  }
+
+  const participant = getParticipantInfo();
+  if(!participant) {
+    alert('Participant details are missing. Please restart and complete required details.');
     return;
   }
 
@@ -454,7 +512,9 @@ function submitToHRReview() {
     page: window.location.pathname.split('/').pop(),
     summary,
     results: latestResults,
-    taker: getActiveUser()?.username || 'guest'
+    participant,
+    adminEmail: getAdminEmailFromLink(),
+    deliveryStatus: 'pending'
   };
 
   const key = 'psychemetrics_hr_submissions_v1';
@@ -462,21 +522,18 @@ function submitToHRReview() {
   existing.unshift(submission);
   localStorage.setItem(key, JSON.stringify(existing));
 
-  const reviewLink = `${window.location.origin}${window.location.pathname.replace(submission.page, 'admin.html')}?submission=${submission.id}`;
+  const delivered = openAdminEmailDraft(submission);
+  submission.deliveryStatus = delivered ? 'mail-draft-opened' : 'stored-locally';
+  existing[0] = submission;
+  localStorage.setItem(key, JSON.stringify(existing));
+
   const btn = document.getElementById('submitHrBtn');
   const original = btn ? btn.textContent : '';
-
-  navigator.clipboard.writeText(reviewLink).then(() => {
-    if(btn){
-      btn.textContent = 'Submitted + Link Copied';
-      setTimeout(() => btn.textContent = original, 1800);
-    }
-    alert('Submitted to HR inbox. Review link copied to clipboard.');
-  }).catch(() => {
-    alert(`Submitted to HR inbox. Open: ${reviewLink}`);
-  });
+  if(btn){
+    btn.textContent = delivered ? 'Results sent to admin' : 'Saved for admin review';
+    setTimeout(() => btn.textContent = original, 1800);
+  }
 }
-
 
 function printResultsOnly() {
   const resultsEl = document.getElementById('results');
