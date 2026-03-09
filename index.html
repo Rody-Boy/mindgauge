@@ -197,6 +197,10 @@ tailwind.config = {
         Browse Assessments
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
       </a>
+      <a id="continueDemoBtn" href="client-demo.html" class="hidden border border-indigo-200 bg-indigo-50 text-indigo-700 px-8 py-4 rounded-2xl font-medium text-lg hover:bg-indigo-100 transition inline-flex items-center gap-2">
+        Continue Demo
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 7l5 5-5 5M6 12h12"/></svg>
+      </a>
     </div>
     <div class="reveal reveal-delay-4 mt-8 flex flex-wrap items-center justify-center gap-2 text-xs">
       <span class="px-3 py-1 rounded-full bg-white border border-stone-200 text-ink-600">Peer-reviewed instruments</span>
@@ -682,6 +686,7 @@ tailwind.config = {
           <a href="gse-assessment.html" class="block hover:text-ink-950 transition">Self-Efficacy (GSE)</a>
           <a href="grit-s-assessment.html" class="block hover:text-ink-950 transition">Grit Scale (Grit-S)</a>
           <a href="uwes9-assessment.html" class="block hover:text-ink-950 transition">Work Engagement (UWES-9)</a>
+          <a href="admin.html" class="block hover:text-ink-950 transition">Admin Workspace</a>
         </div>
       </div>
       <div>
@@ -846,6 +851,21 @@ window.addEventListener('scroll', () => {
     nav.classList.remove('shadow-sm');
   }
 });
+
+/* ===== Continue demo bridge ===== */
+const continueDemoBtn = document.getElementById('continueDemoBtn');
+const DEMO_STATE_KEY = 'psychemetrics_client_demo_state_v1';
+if(continueDemoBtn) {
+  try {
+    const raw = localStorage.getItem(DEMO_STATE_KEY);
+    if(raw) {
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.answers) && parsed.answers.some(a => a !== null) && !parsed.hasResults) {
+        continueDemoBtn.classList.remove('hidden');
+      }
+    }
+  } catch(e) {}
+}
 </script>
 </body>
 </html>
