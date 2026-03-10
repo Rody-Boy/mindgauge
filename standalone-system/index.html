@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics Standalone System</title>
+  <meta name="description" content="Standalone launcher for PsycheMetrics batteries, assessments, and response dashboard." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>body{font-family:'DM Sans',sans-serif;background:#faf9f6;color:#24231f}h1,h2,h3{font-family:'Fraunces',serif}</style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-7xl mx-auto px-6 py-10 space-y-6">
+    <header class="bg-white border border-stone-200 rounded-3xl p-6 md:p-8">
+      <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">Standalone Edition</p>
+      <h1 class="text-3xl md:text-4xl font-bold mt-2">PsycheMetrics Ready-to-Install System</h1>
+      <p class="text-stone-500 mt-2">Run batteries, launch all five assessments, and manage responses from one dashboard.</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <a href="../portal.html" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Open Admin Portal</a>
+        <a href="../admin.html" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Open Submission Inbox</a>
+      </div>
+    </header>
+
+    <section class="grid lg:grid-cols-3 gap-4">
+      <article class="bg-white border border-stone-200 rounded-3xl p-5">
+        <p class="text-xs text-stone-500 uppercase tracking-wide">Responses</p>
+        <p id="kpiSubmissions" class="text-3xl font-bold mt-1">0</p>
+        <p class="text-xs text-stone-500 mt-1">Stored in local inbox</p>
+      </article>
+      <article class="bg-white border border-stone-200 rounded-3xl p-5">
+        <p class="text-xs text-stone-500 uppercase tracking-wide">Completed Attempts</p>
+        <p id="kpiAttempts" class="text-3xl font-bold mt-1">0</p>
+        <p class="text-xs text-stone-500 mt-1">Across all five assessments</p>
+      </article>
+      <article class="bg-white border border-stone-200 rounded-3xl p-5">
+        <p class="text-xs text-stone-500 uppercase tracking-wide">Batteries Available</p>
+        <p id="kpiBatteries" class="text-3xl font-bold mt-1">0</p>
+        <p class="text-xs text-stone-500 mt-1">Preconfigured role templates</p>
+      </article>
+    </section>
+
+    <section class="grid lg:grid-cols-12 gap-4">
+      <section class="lg:col-span-6 bg-white border border-stone-200 rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-bold">Battery Options</h2>
+          <span class="text-xs text-stone-500">Single-link guided flows</span>
+        </div>
+        <div id="batteryList" class="space-y-3"></div>
+      </section>
+
+      <section class="lg:col-span-6 bg-white border border-stone-200 rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-bold">All 5 Assessments</h2>
+          <span class="text-xs text-stone-500">Launch individually</span>
+        </div>
+        <div id="assessmentList" class="space-y-2"></div>
+      </section>
+    </section>
+
+    <section class="bg-white border border-stone-200 rounded-3xl p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-xl font-bold">Response Dashboard</h2>
+        <div class="flex gap-2">
+          <input id="searchInput" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Search by assessment or participant" />
+          <button onclick="refreshDashboard()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Refresh</button>
+        </div>
+      </div>
+      <div class="overflow-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs uppercase tracking-wider text-stone-500 border-b border-stone-200">
+              <th class="py-2 pr-3">Assessment</th>
+              <th class="py-2 pr-3">Participant</th>
+              <th class="py-2 pr-3">Submitted</th>
+              <th class="py-2 pr-3">Status</th>
+              <th class="py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="responseRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+<script>
+const SUBMISSION_KEY = 'psychemetrics_hr_submissions_v1';
+const ATTEMPTS_KEY = 'psychemetrics_test_attempts_v1';
+const ASSESSMENTS = [
+  { label:'IPIP-NEO-120', path:'../ipip-neo-120-assessment.html' },
+  { label:'Big Five (IPIP-50)', path:'../big5-ipip50-assessment.html' },
+  { label:'General Self-Efficacy', path:'../gse-assessment.html' },
+  { label:'Grit-S', path:'../grit-s-assessment.html' },
+  { label:'UWES-9', path:'../uwes9-assessment.html' }
+];
+
+const BATTERIES = [
+  {
+    role: 'Sales Hiring Battery',
+    tests: ['../big5-ipip50-assessment.html','../gse-assessment.html','../grit-s-assessment.html'],
+    description: 'Personality baseline, confidence, and persistence indicators.'
+  },
+  {
+    role: 'Leadership Potential Battery',
+    tests: ['../ipip-neo-120-assessment.html','../uwes9-assessment.html','../gse-assessment.html'],
+    description: 'Deep trait profile plus engagement and self-efficacy context.'
+  },
+  {
+    role: 'Workforce Engagement Battery',
+    tests: ['../uwes9-assessment.html','../grit-s-assessment.html','../big5-ipip50-assessment.html'],
+    description: 'Engagement patterns, effort consistency, and team behavior style.'
+  }
+];
+
+function batteryLink(bat){
+  const tests = bat.tests.map(t => encodeURIComponent(t.replace('../',''))).join(',');
+  const params = new URLSearchParams({ role: bat.role, tests, batteryId: `std_${bat.role.replace(/\W+/g,'_').toLowerCase()}` });
+  return `../battery.html?${params.toString()}`;
+}
+
+function renderStatic(){
+  document.getElementById('kpiBatteries').textContent = String(BATTERIES.length);
+
+  document.getElementById('batteryList').innerHTML = BATTERIES.map(b => `
+    <div class="rounded-2xl border border-stone-200 p-4">
+      <p class="font-semibold">${b.role}</p>
+      <p class="text-xs text-stone-500 mt-1">${b.description}</p>
+      <div class="mt-3 flex gap-2">
+        <a href="${batteryLink(b)}" class="px-3 py-1.5 rounded-lg bg-stone-900 text-white text-xs">Open Battery</a>
+        <button onclick="copyLink('${batteryLink(b)}')" class="px-3 py-1.5 rounded-lg border border-stone-300 text-xs">Copy Link</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('assessmentList').innerHTML = ASSESSMENTS.map(a => `
+    <div class="rounded-xl border border-stone-200 px-3 py-2 flex items-center justify-between gap-2">
+      <span>${a.label}</span>
+      <a href="${a.path}" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300">Open</a>
+    </div>
+  `).join('');
+}
+
+function copyLink(url){ navigator.clipboard.writeText(new URL(url, location.href).href); }
+
+function refreshDashboard(){
+  const submissions = JSON.parse(localStorage.getItem(SUBMISSION_KEY) || '[]');
+  const attempts = JSON.parse(localStorage.getItem(ATTEMPTS_KEY) || '[]');
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+
+  document.getElementById('kpiSubmissions').textContent = String(submissions.length);
+  document.getElementById('kpiAttempts').textContent = String(attempts.length);
+
+  const filtered = submissions.filter(s => {
+    const hay = `${s.assessment || ''} ${s.participant?.name || ''} ${s.participant?.email || ''}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  const rows = document.getElementById('responseRows');
+  rows.innerHTML = filtered.map(s => `
+    <tr class="border-b border-stone-100">
+      <td class="py-2 pr-3 font-medium">${s.assessment || 'Assessment'}</td>
+      <td class="py-2 pr-3">${s.participant?.name || 'N/A'}</td>
+      <td class="py-2 pr-3 text-stone-500">${s.submittedAt ? new Date(s.submittedAt).toLocaleString() : 'N/A'}</td>
+      <td class="py-2 pr-3">${s.reviewed ? '<span class="text-emerald-700">Reviewed</span>' : '<span class="text-amber-700">Pending</span>'}</td>
+      <td class="py-2">
+        <a href="../admin.html?submission=${encodeURIComponent(s.id || '')}" class="px-2 py-1 rounded border border-stone-300 text-xs">Open Result</a>
+      </td>
+    </tr>
+  `).join('') || '<tr><td class="py-3 text-stone-500" colspan="5">No responses found.</td></tr>';
+}
+
+document.getElementById('searchInput').addEventListener('input', refreshDashboard);
+renderStatic();
+refreshDashboard();
+</script>
+</body>
+</html>
