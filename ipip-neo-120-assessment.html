@@ -339,6 +339,7 @@ const shortLabels = ["VI","I","N","A","VA"];
 let current = 0;
 let answers = new Array(TOTAL).fill(null); // indexed by ORIGINAL item index
 let latestResults = null;
+
 let radarChartInstance = null;
 
 document.addEventListener('keydown', (e) => {
@@ -477,6 +478,9 @@ function calculateResults(){
   }
 
   latestResults = { domainPercentiles, domainScores };
+  recordAssessmentCompletion();
+  submitToHRReview();
+  handleBatteryReturn();
   renderRadar(domainPercentiles);
   renderDomainBars(domainPercentiles, domainScores);
   renderFacetDetails(domainPercentiles, facetScores, facetPercentiles);

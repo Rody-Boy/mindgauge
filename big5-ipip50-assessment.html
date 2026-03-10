@@ -413,6 +413,9 @@ function calculateResults() {
   }
 
   latestResults = { percentiles, rawScores };
+  recordAssessmentCompletion();
+  submitToHRReview();
+  handleBatteryReturn();
   renderCharts(percentiles);
   renderBars(percentiles);
   renderInterpretation(percentiles);

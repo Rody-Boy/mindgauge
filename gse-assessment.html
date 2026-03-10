@@ -229,6 +229,9 @@ function calculateResults() {
   const percentile = zToPercentile(z);
 
   latestResults = { totalScore, percentile };
+  recordAssessmentCompletion();
+  submitToHRReview();
+  handleBatteryReturn();
   renderGauge(totalScore, percentile);
   renderBarChart();
   renderInterpretation(totalScore, percentile);

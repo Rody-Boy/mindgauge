@@ -245,6 +245,9 @@ function calculateResults() {
   const peScore = peItems.reduce((s,i)=>s+scored[i],0) / 4;
 
   latestResults = { totalGrit, ciScore, peScore };
+  recordAssessmentCompletion();
+  submitToHRReview();
+  handleBatteryReturn();
   renderScore(totalGrit, ciScore, peScore);
   renderSubscales(ciScore, peScore);
   renderRadar(totalGrit, ciScore, peScore);

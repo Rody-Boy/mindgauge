@@ -255,6 +255,9 @@ function calculateResults() {
   const overall = answers.reduce((s,v)=>s+v,0) / 9;
 
   latestResults = { overall, vigor, dedication, absorption };
+  recordAssessmentCompletion();
+  submitToHRReview();
+  handleBatteryReturn();
   renderScore(overall, vigor, dedication, absorption);
   renderDimensionBars(vigor, dedication, absorption);
   renderRadar(vigor, dedication, absorption);
