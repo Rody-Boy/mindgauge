@@ -1,14 +1,10 @@
-# PsycheMetrics Standalone System
+# PsycheMetrics System Package
 
-This folder provides a **ready-to-install standalone launcher** for:
+This folder provides a local install package with 3 locked-navigation pages:
 
-1. **Battery options** (role-based multi-test links)
-2. **All 5 assessments** (individual launch)
-3. **Response dashboard** (reads local browser data and opens detailed results)
-
-## Files
-
-- `index.html` — standalone control center UI
+1. `index.html` — Launcher (batteries, all assessments, response dashboard)
+2. `portal.html` — Portal page
+3. `admin.html` — Submission inbox page
 
 ## How to run
 
@@ -21,6 +17,8 @@ python3 -m http.server 7000 --directory /workspace/mindgauge
 Open:
 
 - `http://127.0.0.1:7000/standalone-system/index.html`
+- `http://127.0.0.1:7000/standalone-system/portal.html`
+- `http://127.0.0.1:7000/standalone-system/admin.html`
 
 ## Data sources used
 
@@ -29,6 +27,6 @@ Open:
 
 ## Notes
 
-- "Open Result" jumps to `admin.html?submission=<id>`.
+- "Open Result" opens the inbox view with the submission context.
 - Battery links open the guided runner in `battery.html`.
-- Assessment links open the individual assessment pages directly.
+- Assessment links support open + copy actions.
