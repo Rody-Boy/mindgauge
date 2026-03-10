@@ -64,7 +64,16 @@
             <h2 class="text-xl font-bold">Submissions</h2>
             <button onclick="refreshInbox()" class="px-2 py-1 text-xs rounded border border-stone-300">Refresh</button>
           </div>
+          <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+            <button data-filter="all" class="inbox-filter px-2 py-1.5 rounded-lg border border-stone-300 bg-stone-900 text-white">All</button>
+            <button data-filter="pending" class="inbox-filter px-2 py-1.5 rounded-lg border border-stone-300">Pending</button>
+            <button data-filter="reviewed" class="inbox-filter px-2 py-1.5 rounded-lg border border-stone-300">Reviewed</button>
+          </div>
           <input id="searchInput" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm mb-3" placeholder="Search by assessment or summary" />
+          <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+            <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">Pending: <strong id="pendingCount">0</strong></div>
+            <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">Reviewed: <strong id="reviewedCount">0</strong></div>
+          </div>
           <div id="submissionList" class="space-y-2 max-h-[560px] overflow-auto" role="listbox" aria-label="HR submissions"></div>
         </section>
 
@@ -149,6 +158,7 @@
     let submissions = [];
     let activeId = null;
     let chartInstance = null;
+    let activeFilter = 'all';
 
     function toast(msg){
       const wrap = document.getElementById('toastWrap');
@@ -181,6 +191,8 @@
     function refreshInbox(){
       submissions = JSON.parse(localStorage.getItem(SUBMISSION_KEY) || '[]');
       document.getElementById('inboxCount').textContent = `${submissions.length} submissions`;
+      document.getElementById('pendingCount').textContent = String(submissions.filter(s => !s.reviewed).length);
+      document.getElementById('reviewedCount').textContent = String(submissions.filter(s => s.reviewed).length);
       renderSubmissionList();
       const requested = new URL(location.href).searchParams.get('submission');
       if(requested && submissions.some(s => s.id === requested)) {
@@ -190,15 +202,19 @@
 
     function renderSubmissionList(){
       const q = (document.getElementById('searchInput').value || '').toLowerCase();
-      const filtered = submissions.filter(s => `${s.assessment} ${s.summary || ''}`.toLowerCase().includes(q));
+      const filtered = submissions.filter(s => {
+        const statusMatch = activeFilter === 'all' || (activeFilter === 'reviewed' ? !!s.reviewed : !s.reviewed);
+        const text = `${s.assessment} ${s.summary || ''} ${s.participant?.name || ''}`.toLowerCase();
+        return statusMatch && text.includes(q);
+      });
       const wrap = document.getElementById('submissionList');
       wrap.innerHTML = filtered.map(s => `
-        <button role="option" aria-selected="${activeId===s.id}" onclick="openSubmission('${s.id}')" class="w-full text-left rounded-xl border p-3 ${activeId===s.id?'border-indigo-300 bg-indigo-50':'border-stone-200 bg-white'} hover:border-stone-400">
+        <button role="option" aria-selected="${activeId===s.id}" onclick="openSubmission('${s.id}')" class="w-full text-left rounded-xl border p-3 ${activeId===s.id?'border-indigo-300 bg-indigo-50':'border-stone-200 bg-white'} hover:border-stone-400 transition">
           <div class="flex justify-between items-center gap-2">
             <span class="font-semibold text-sm">${s.assessment || 'Assessment'}</span>
-            <span class="text-[10px] uppercase ${s.reviewed?'text-emerald-600':'text-stone-400'}">${s.reviewed?'reviewed':'new'}</span>
+            <span class="text-[10px] uppercase px-2 py-0.5 rounded-full ${s.reviewed?'text-emerald-700 bg-emerald-100':'text-amber-700 bg-amber-100'}">${s.reviewed?'reviewed':'pending'}</span>
           </div>
-          <div class="text-xs text-stone-500 mt-1">${new Date(s.submittedAt).toLocaleString()}</div>
+          <div class="text-xs text-stone-500 mt-1">${s.participant?.name || 'Unknown participant'} · ${new Date(s.submittedAt).toLocaleString()}</div>
         </button>
       `).join('') || '<p class="text-sm text-stone-500">No submissions found.</p>';
     }
@@ -359,6 +375,16 @@
 
     document.getElementById('unlockBtn').addEventListener('click', unlockHR);
     document.getElementById('searchInput').addEventListener('input', renderSubmissionList);
+    document.querySelectorAll('.inbox-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.inbox-filter').forEach(b => {
+          b.classList.remove('bg-stone-900','text-white');
+        });
+        btn.classList.add('bg-stone-900','text-white');
+        renderSubmissionList();
+      });
+    });
 
     const authSessionRaw = sessionStorage.getItem(AUTH_SESSION_KEY);
     let allowedRole = false;
