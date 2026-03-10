@@ -155,9 +155,6 @@ tailwind.config = {
       <button id="mobileMenuButton" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobileMenu" class="md:hidden w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-ink-400">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="hidden md:inline-flex bg-ink-950 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-ink-800 transition shadow-sm">
-        Book Demo
-      </a>
       <a href="#assessments" class="hidden md:inline-flex border border-stone-200 text-ink-700 px-4 py-2 rounded-xl text-sm font-medium hover:border-ink-400 hover:text-ink-950 transition">
         Get Started
       </a>
@@ -191,10 +188,6 @@ tailwind.config = {
       Five scientifically validated, public-domain psychological instruments — built with proper scoring, norm-referenced percentiles, and beautiful interactive dashboards. Ready to use in your browser.
     </p>
     <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="bg-ink-950 text-white px-8 py-4 rounded-2xl font-medium text-lg hover:bg-ink-800 transition shadow-lg shadow-ink-950/10 inline-flex items-center gap-2">
-        Book a Demo
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-      </a>
       <a href="#assessments" class="text-ink-500 px-8 py-4 rounded-2xl font-medium text-lg hover:text-ink-950 transition inline-flex items-center gap-2">
         Browse Assessments
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
@@ -692,7 +685,6 @@ tailwind.config = {
         <div class="space-y-2 text-xs text-ink-400 leading-relaxed">
           <p>No data collected. No cookies. No tracking.</p>
           <p>All computations run client-side in your browser.</p>
-          <a href="mailto:hello@psychemetrics.app?subject=PsycheMetrics%20Demo%20Request" class="inline-block mt-2 text-ink-600 hover:text-ink-950 transition">Request a demo →</a>
           <a href="#data-handling" class="inline-block ml-3 mt-2 text-ink-600 hover:text-ink-950 transition">Data handling</a>
         </div>
       </div>
@@ -809,18 +801,6 @@ function toggleMobileMenu() {
   trigger.setAttribute('aria-expanded', String(isOpen));
 }
 
-
-/* ===== Sticky mobile CTA visibility ===== */
-const stickyDemoCta = document.getElementById('stickyDemoCta');
-const footer = document.querySelector('footer');
-if(stickyDemoCta && footer) {
-  const ctaObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      stickyDemoCta.style.display = entry.isIntersecting ? 'none' : 'block';
-    });
-  }, { threshold: 0.05 });
-  ctaObserver.observe(footer);
-}
 
 /* ===== Nav scroll effect ===== */
 window.addEventListener('scroll', () => {
