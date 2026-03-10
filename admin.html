@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics HR Review Console</title>
+  <meta name="description" content="HR-only review console for assessment submissions in PsycheMetrics." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'DM Sans',sans-serif;background:#faf9f6;color:#24231f}
+    h1,h2,h3,h4{font-family:'Fraunces',serif}
+    .glass{background:rgba(255,255,255,.9);backdrop-filter:blur(10px)}
+    @media print {
+      body.print-submission-only * { visibility: hidden !important; }
+      body.print-submission-only #detailPane,
+      body.print-submission-only #detailPane * { visibility: visible !important; }
+      body.print-submission-only #detailPane {
+        position:absolute !important; inset:0 !important; width:100% !important; padding:12px !important; background:#fff !important;
+      }
+      body.print-submission-only #detailPane button,
+      body.print-submission-only #detailPane textarea,
+      body.print-submission-only #detailPane input { display:none !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-7xl mx-auto px-5 py-8 md:py-10">
+    <section id="authGate" class="max-w-lg mx-auto glass border border-stone-200 rounded-3xl p-8">
+      <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">Restricted Access</p>
+      <h1 class="text-3xl font-bold mt-2">HR Manager Login</h1>
+      <p class="text-stone-500 mt-2">Only authorized administrators can access submitted assessment records.</p>
+      <div class="mt-5 space-y-3">
+        <label class="text-sm font-medium text-stone-700" for="hrPasscode">Passcode</label>
+        <input id="hrPasscode" type="password" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Enter HR passcode" />
+        <button id="unlockBtn" class="w-full px-4 py-3 rounded-xl bg-stone-900 text-white font-semibold">Unlock HR Console</button>
+        <p class="text-xs text-stone-500">Prototype default passcode: <code>HR-ONLY</code></p>
+        <a href="portal.html" class="inline-block text-xs text-indigo-700 underline">Login via Portal</a>
+      </div>
+    </section>
+
+    <section id="hrConsole" class="hidden space-y-5">
+      <header class="glass border border-stone-200 rounded-3xl p-6 md:p-8">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+          <div>
+            <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">HR Team View</p>
+            <h1 class="text-3xl md:text-4xl font-bold mt-2">PsycheMetrics Submission Inbox</h1>
+            <p class="text-stone-500 mt-2">Review submitted assessments, participant details, notes, and outcomes.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="inboxCount" class="px-3 py-2 rounded-xl border border-stone-200 text-xs text-stone-600">0 submissions</span>
+            <a href="index.html" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-stone-700 hover:border-stone-400">Back to Site</a>
+            <button onclick="logoutHR()" class="px-4 py-2 rounded-xl border border-stone-200 text-sm text-stone-700 hover:border-stone-400">Lock Console</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid lg:grid-cols-12 gap-4">
+        <section class="lg:col-span-4 glass border border-stone-200 rounded-3xl p-5">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h2 class="text-xl font-bold">Submissions</h2>
+            <button onclick="refreshInbox()" class="px-2 py-1 text-xs rounded border border-stone-300">Refresh</button>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+            <button data-filter="all" class="inbox-filter px-2 py-1.5 rounded-lg border border-stone-300 bg-stone-900 text-white">All</button>
+            <button data-filter="pending" class="inbox-filter px-2 py-1.5 rounded-lg border border-stone-300">Pending</button>
+            <button data-filter="reviewed" class="inbox-filter px-2 py-1.5 rounded-lg border border-stone-300">Reviewed</button>
+          </div>
+          <input id="searchInput" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm mb-3" placeholder="Search by assessment or summary" />
+          <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+            <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">Pending: <strong id="pendingCount">0</strong></div>
+            <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">Reviewed: <strong id="reviewedCount">0</strong></div>
+          </div>
+          <div id="submissionList" class="space-y-2 max-h-[560px] overflow-auto" role="listbox" aria-label="HR submissions"></div>
+        </section>
+
+        <section class="lg:col-span-8 glass border border-stone-200 rounded-3xl p-5">
+          <div id="emptyState" class="text-stone-500 text-sm">Select a submission to review details.</div>
+          <div id="detailPane" class="hidden space-y-4">
+            <div class="flex flex-wrap justify-between items-start gap-2">
+              <div>
+                <h2 id="detailTitle" class="text-2xl font-bold"></h2>
+                <p id="detailMeta" class="text-sm text-stone-500 mt-1"></p>
+                <p id="detailParticipant" class="text-sm text-stone-600 mt-1"></p>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="copySubmission()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Copy</button>
+                <button onclick="printSubmission()" class="px-3 py-2 rounded-xl border border-stone-300 text-sm">Print</button>
+                <button onclick="markReviewed()" class="px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50 text-sm text-emerald-700">Mark Reviewed</button>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-3">
+              <div class="rounded-2xl border border-stone-200 bg-white p-3">
+                <p class="text-xs text-stone-500 uppercase tracking-wide">Score Metrics</p>
+                <p id="metricCount" class="text-2xl font-bold mt-1">0</p>
+              </div>
+              <div class="rounded-2xl border border-stone-200 bg-white p-3">
+                <p class="text-xs text-stone-500 uppercase tracking-wide">Top Metric</p>
+                <p id="topMetric" class="text-sm font-semibold mt-2">-</p>
+              </div>
+              <div class="rounded-2xl border border-stone-200 bg-white p-3">
+                <p class="text-xs text-stone-500 uppercase tracking-wide">Review Status</p>
+                <p id="reviewStatus" class="text-sm font-semibold mt-2">Pending</p>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-stone-200 bg-white p-4">
+              <h3 class="font-semibold mb-2">Result Breakdown</h3>
+              <canvas id="resultChart" height="110"></canvas>
+            </div>
+
+
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="rounded-2xl border border-stone-200 bg-white p-4">
+                <h3 class="font-semibold mb-2">Subscale Comparison</h3>
+                <div id="subscaleComparison" class="text-sm text-stone-700 space-y-2"></div>
+              </div>
+              <div class="rounded-2xl border border-stone-200 bg-white p-4">
+                <h3 class="font-semibold mb-2">Subscale Breakdown</h3>
+                <div id="subscaleBreakdown" class="text-sm text-stone-700 space-y-2"></div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-stone-200 bg-white p-4">
+              <h3 class="font-semibold mb-2">Interpretation</h3>
+              <div id="interpretationBlock" class="text-sm text-stone-700 leading-relaxed"></div>
+            </div>
+
+            <div class="rounded-2xl border border-stone-200 bg-white p-4">
+              <h3 class="font-semibold mb-2">HR &amp; Workplace Implications</h3>
+              <ul id="hrImplications" class="list-disc pl-5 text-sm text-stone-700 space-y-1"></ul>
+            </div>
+
+
+            <div class="rounded-2xl border border-stone-200 bg-white p-4">
+              <h3 class="font-semibold mb-2">HR Review Notes</h3>
+              <textarea id="hrNotes" rows="4" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Add review comments..."></textarea>
+              <button onclick="saveHRNotes()" class="mt-2 px-3 py-1.5 rounded-lg border border-stone-300 text-sm">Save HR Notes</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="toastWrap" class="fixed top-4 right-4 z-50 space-y-2" aria-live="polite"></div>
+
+  <script>
+    const SUBMISSION_KEY = 'psychemetrics_hr_submissions_v1';
+    const HR_SESSION_KEY = 'psychemetrics_hr_session';
+    const HR_PASSCODE = 'HR-ONLY';
+    const AUTH_SESSION_KEY = 'psychemetrics_auth_session_v1';
+
+    let submissions = [];
+    let activeId = null;
+    let chartInstance = null;
+    let activeFilter = 'all';
+
+    function toast(msg){
+      const wrap = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = 'bg-stone-900 text-white text-sm px-3 py-2 rounded-lg shadow';
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(()=>el.remove(),1800);
+    }
+
+    function unlockHR(){
+      const pass = document.getElementById('hrPasscode').value;
+      if(pass !== HR_PASSCODE) return toast('Invalid passcode');
+      sessionStorage.setItem(HR_SESSION_KEY, '1');
+      sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({username:'hr',name:'HR Manager',role:'hr'}));
+      document.getElementById('authGate').classList.add('hidden');
+      document.getElementById('hrConsole').classList.remove('hidden');
+      refreshInbox();
+      toast('HR console unlocked');
+    }
+
+    function logoutHR(){
+      sessionStorage.removeItem(HR_SESSION_KEY);
+      sessionStorage.removeItem(AUTH_SESSION_KEY);
+      document.getElementById('hrConsole').classList.add('hidden');
+      document.getElementById('authGate').classList.remove('hidden');
+      activeId = null;
+    }
+
+    function refreshInbox(){
+      submissions = JSON.parse(localStorage.getItem(SUBMISSION_KEY) || '[]');
+      document.getElementById('inboxCount').textContent = `${submissions.length} submissions`;
+      document.getElementById('pendingCount').textContent = String(submissions.filter(s => !s.reviewed).length);
+      document.getElementById('reviewedCount').textContent = String(submissions.filter(s => s.reviewed).length);
+      renderSubmissionList();
+      const requested = new URL(location.href).searchParams.get('submission');
+      if(requested && submissions.some(s => s.id === requested)) {
+        openSubmission(requested);
+      }
+    }
+
+    function renderSubmissionList(){
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      const filtered = submissions.filter(s => {
+        const statusMatch = activeFilter === 'all' || (activeFilter === 'reviewed' ? !!s.reviewed : !s.reviewed);
+        const text = `${s.assessment} ${s.summary || ''} ${s.participant?.name || ''}`.toLowerCase();
+        return statusMatch && text.includes(q);
+      });
+      const wrap = document.getElementById('submissionList');
+      wrap.innerHTML = filtered.map(s => `
+        <button role="option" aria-selected="${activeId===s.id}" onclick="openSubmission('${s.id}')" class="w-full text-left rounded-xl border p-3 ${activeId===s.id?'border-indigo-300 bg-indigo-50':'border-stone-200 bg-white'} hover:border-stone-400 transition">
+          <div class="flex justify-between items-center gap-2">
+            <span class="font-semibold text-sm">${s.assessment || 'Assessment'}</span>
+            <span class="text-[10px] uppercase px-2 py-0.5 rounded-full ${s.reviewed?'text-emerald-700 bg-emerald-100':'text-amber-700 bg-amber-100'}">${s.reviewed?'reviewed':'pending'}</span>
+          </div>
+          <div class="text-xs text-stone-500 mt-1">${s.participant?.name || 'Unknown participant'} · ${new Date(s.submittedAt).toLocaleString()}</div>
+        </button>
+      `).join('') || '<p class="text-sm text-stone-500">No submissions found.</p>';
+    }
+
+    function extractNumericMetrics(obj, prefix='') {
+      const out = [];
+      if(!obj || typeof obj !== 'object') return out;
+      for (const [key, val] of Object.entries(obj)) {
+        const label = prefix ? `${prefix}.${key}` : key;
+        if (typeof val === 'number' && Number.isFinite(val)) {
+          out.push({ label, value: val });
+        } else if (val && typeof val === 'object') {
+          out.push(...extractNumericMetrics(val, label));
+        }
+      }
+      return out;
+    }
+
+    function renderResultChart(sub) {
+      const metrics = extractNumericMetrics(sub.results || {}).slice(0, 8);
+      document.getElementById('metricCount').textContent = String(metrics.length);
+      if(!metrics.length) {
+        document.getElementById('topMetric').textContent = 'No numeric metrics';
+        if(chartInstance) { chartInstance.destroy(); chartInstance = null; }
+        return;
+      }
+      const top = [...metrics].sort((a,b) => b.value - a.value)[0];
+      document.getElementById('topMetric').textContent = `${top.label}: ${top.value}`;
+
+      if(chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(document.getElementById('resultChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: metrics.map(m => m.label.length > 20 ? m.label.slice(0,20) + '…' : m.label),
+          datasets: [{
+            label: 'Result values',
+            data: metrics.map(m => m.value),
+            backgroundColor: '#6366f1'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+
+    function renderInsightSections(sub) {
+      const metrics = extractNumericMetrics(sub.results || {}).filter(m => m.value >= 0);
+      const sorted = [...metrics].sort((a,b) => b.value - a.value);
+      const top = sorted.slice(0, 3);
+      const bottom = sorted.slice(-3).reverse();
+
+      const comparison = document.getElementById('subscaleComparison');
+      comparison.innerHTML = top.length
+        ? top.map(m => `<div class="flex items-center justify-between"><span>${m.label}</span><strong>${m.value}</strong></div>`).join('')
+        : '<p class="text-stone-500">No comparable subscale metrics available.</p>';
+
+      const breakdown = document.getElementById('subscaleBreakdown');
+      breakdown.innerHTML = metrics.length
+        ? metrics.slice(0,8).map(m => `
+            <div>
+              <div class="flex items-center justify-between text-xs mb-1"><span>${m.label}</span><span>${m.value}</span></div>
+              <div class="h-2 bg-stone-200 rounded-full overflow-hidden"><div class="h-2 bg-indigo-600" style="width:${Math.max(4,Math.min(100,m.value))}%"></div></div>
+            </div>
+          `).join('')
+        : '<p class="text-stone-500">No numeric breakdown available.</p>';
+
+      const interpretation = document.getElementById('interpretationBlock');
+      if(top.length) {
+        const strengths = top.map(t => t.label).join(', ');
+        const development = bottom.length ? bottom.map(b => b.label).join(', ') : 'N/A';
+        interpretation.textContent = `The strongest observed subscales are ${strengths}. Potential development focus areas include ${development}. Overall pattern suggests a profile that should be reviewed with role context, team demands, and manager observations before final decisions.`;
+      } else {
+        interpretation.textContent = 'Interpretation is unavailable because the submission does not include structured numeric subscale values.';
+      }
+
+      const implications = document.getElementById('hrImplications');
+      const items = top.length ? [
+        `Prioritize role mapping where strengths in ${top[0].label} can be directly utilized.`,
+        'Use this as one signal in a broader review process with interview and performance evidence.',
+        bottom.length ? `Create development plans targeting ${bottom[0].label} through coaching and manager check-ins.` : 'Establish a 30-day calibration review with manager feedback.',
+        'Reassess after onboarding milestones to track progression against role expectations.'
+      ] : [
+        'Request a more complete structured result payload before formal HR decisions.',
+        'Pair this submission with interview, manager, and performance evidence.',
+        'Use follow-up check-ins to validate interpretation quality over time.'
+      ];
+      implications.innerHTML = items.map(i => `<li>${i}</li>`).join('');
+    }
+
+
+    function openSubmission(id){
+      const sub = submissions.find(s => s.id === id);
+      if(!sub) return;
+      activeId = id;
+      renderSubmissionList();
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('detailPane').classList.remove('hidden');
+      document.getElementById('detailTitle').textContent = sub.assessment || 'Assessment Submission';
+      document.getElementById('detailMeta').textContent = `ID: ${sub.id} · Submitted ${new Date(sub.submittedAt).toLocaleString()} · Source: ${sub.page || 'N/A'}`;
+      const p = sub.participant || {};
+      document.getElementById('detailParticipant').textContent = `Participant: ${p.name || 'N/A'} · ${p.email || 'N/A'} · ${p.applicantId || 'No ID'} · ${p.position || 'No role'} · ${p.organization || 'No org'}`;
+      document.getElementById('hrNotes').value = sub.hrNotes || '';
+      document.getElementById('reviewStatus').textContent = sub.reviewed ? `Reviewed ${sub.reviewedAt ? '· ' + new Date(sub.reviewedAt).toLocaleString() : ''}` : 'Pending';
+      renderResultChart(sub);
+      renderInsightSections(sub);
+    }
+
+    function saveCurrentSubmission(partial){
+      const idx = submissions.findIndex(s => s.id === activeId);
+      if(idx < 0) return;
+      submissions[idx] = { ...submissions[idx], ...partial, reviewedAt: partial.reviewed ? new Date().toISOString() : submissions[idx].reviewedAt };
+      localStorage.setItem(SUBMISSION_KEY, JSON.stringify(submissions));
+      renderSubmissionList();
+    }
+
+    function markReviewed(){
+      if(!activeId) return;
+      saveCurrentSubmission({ reviewed: true });
+      openSubmission(activeId);
+      toast('Marked as reviewed');
+    }
+
+    function saveHRNotes(){
+      if(!activeId) return;
+      saveCurrentSubmission({ hrNotes: document.getElementById('hrNotes').value });
+      toast('HR notes saved');
+    }
+
+    function copySubmission(){
+      if(!activeId) return;
+      const s = submissions.find(x => x.id === activeId);
+      if(!s) return;
+      const text = [
+        `Assessment: ${s.assessment}`,
+        `Submitted: ${new Date(s.submittedAt).toLocaleString()}`,
+        `Participant: ${s.participant?.name || 'N/A'} (${s.participant?.email || 'N/A'})`,
+        `Applicant ID: ${s.participant?.applicantId || 'N/A'}`,
+        `Position/Program: ${s.participant?.position || 'N/A'}`,
+        `Company/School: ${s.participant?.organization || 'N/A'}`,
+        `Admin Delivery: ${s.deliveryStatus || 'N/A'} ${s.adminEmail ? 'to ' + s.adminEmail : ''}`,
+        `Summary:\n${s.summary || 'N/A'}`,
+        `HR Notes:\n${s.hrNotes || 'N/A'}`
+      ].join('\n\n');
+      navigator.clipboard.writeText(text).then(()=>toast('Submission copied'));
+    }
+
+    function printSubmission(){
+      if(!activeId) return;
+      document.body.classList.add('print-submission-only');
+      window.print();
+      setTimeout(()=>document.body.classList.remove('print-submission-only'), 300);
+    }
+
+    document.getElementById('unlockBtn').addEventListener('click', unlockHR);
+    document.getElementById('searchInput').addEventListener('input', renderSubmissionList);
+    document.querySelectorAll('.inbox-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.inbox-filter').forEach(b => {
+          b.classList.remove('bg-stone-900','text-white');
+        });
+        btn.classList.add('bg-stone-900','text-white');
+        renderSubmissionList();
+      });
+    });
+
+    const authSessionRaw = sessionStorage.getItem(AUTH_SESSION_KEY);
+    let allowedRole = false;
+    if(authSessionRaw){
+      try {
+        const auth = JSON.parse(authSessionRaw);
+        allowedRole = ['admin','hr','psychologist'].includes(auth.role);
+      } catch(e) {}
+    }
+
+    if(sessionStorage.getItem(HR_SESSION_KEY) === '1' || allowedRole) {
+      document.getElementById('authGate').classList.add('hidden');
+      document.getElementById('hrConsole').classList.remove('hidden');
+      refreshInbox();
+    }
+  </script>
+
+<script>
+(function enforceNewTabLinks(){
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) return;
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+})();
+</script>
+
+</body>
+</html>
