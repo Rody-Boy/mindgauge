@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics Administrator Portal</title>
+  <meta name="description" content="Administrator-only portal for HR managers, psychologists, and authorized personnel." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+  <style>body{font-family:'DM Sans',sans-serif;background:#faf9f6;color:#24231f}h1,h2,h3{font-family:'Fraunces',serif}</style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    <section id="authView" class="max-w-xl mx-auto bg-white border border-stone-200 rounded-3xl p-8">
+      <h1 class="text-3xl font-bold">PsycheMetrics Admin Portal</h1>
+      <p class="text-stone-500 mt-2">Only administrators (HR, psychologists, authorized staff) can sign in.</p>
+
+      <form id="loginForm" class="mt-4 space-y-3">
+        <input id="loginUser" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Username" required />
+        <input id="loginPass" type="password" class="w-full rounded-xl border border-stone-300 px-4 py-3" placeholder="Password" required />
+        <button class="w-full py-3 rounded-xl bg-stone-900 text-white font-semibold">Sign In</button>
+        <p class="text-xs text-stone-500">Default accounts: <code>admin/admin123</code>, <code>hr/hr123</code>, <code>psych/psych123</code>.</p>
+      </form>
+      <p id="authMsg" class="mt-3 text-sm text-rose-600"></p>
+    </section>
+
+    <section id="dashboardView" class="hidden space-y-5">
+      <header class="bg-white border border-stone-200 rounded-3xl p-6 flex flex-wrap justify-between items-center gap-3">
+        <div>
+          <h2 class="text-3xl font-bold">Administrator Dashboard</h2>
+          <p id="profileMeta" class="text-stone-500 mt-1"></p>
+        </div>
+        <div class="flex gap-2">
+          <a href="index.html" class="px-4 py-2 rounded-xl border border-stone-300 text-sm">Home</a>
+          <button id="logoutBtn" class="px-4 py-2 rounded-xl border border-stone-300 text-sm">Logout</button>
+        </div>
+      </header>
+
+      <div id="kpiRow" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+
+      <div class="grid lg:grid-cols-12 gap-4">
+        <section class="lg:col-span-5 bg-white border border-stone-200 rounded-3xl p-5">
+          <h3 class="text-xl font-bold mb-3">Assessment Delivery</h3>
+          <p class="text-sm text-stone-600">Use one flow for onsite and remote testing. Test takers do not need accounts.</p>
+          <div class="mt-4 space-y-3 text-sm">
+            <div class="rounded-xl border border-stone-200 p-3">
+              <p class="font-semibold">Onsite</p>
+              <p class="text-stone-500 mt-1">Open a test on a supervised tablet/laptop. Candidate fills required participant details before starting.</p>
+            </div>
+            <div class="rounded-xl border border-stone-200 p-3">
+              <p class="font-semibold">Remote link via email</p>
+              <p class="text-stone-500 mt-1">Generate assessment links with your notification email attached.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-wide text-stone-500">Administrator result email</label>
+            <input id="adminEmail" type="email" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="hr@company.com" />
+            <button id="saveEmailBtn" class="px-3 py-2 rounded-lg bg-stone-900 text-white text-sm">Save Email</button>
+          </div>
+
+          <div id="linkBuilder" class="mt-4 space-y-2 text-sm"></div>
+
+          <div class="mt-6 pt-5 border-t border-stone-200">
+            <h4 class="font-semibold">Create Role-Based Battery</h4>
+            <p class="text-xs text-stone-500 mt-1">Build one link containing multiple assessments for a specific role workflow.</p>
+            <div class="mt-3 space-y-2">
+              <input id="batteryRole" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Role name (e.g., Sales Hiring Battery)" />
+              <div id="batteryChecks" class="grid grid-cols-1 gap-1 text-xs"></div>
+              <div class="flex gap-2">
+                <button id="generateBatteryBtn" class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs">Generate Battery Link</button>
+                <button id="copyBatteryBtn" class="px-3 py-2 rounded-lg border border-stone-300 text-xs">Copy Link</button>
+              </div>
+              <input id="batteryLink" readonly class="w-full rounded-xl border border-stone-300 px-3 py-2 text-xs text-stone-600" placeholder="Battery link will appear here" />
+            </div>
+          </div>
+        </section>
+
+        <section class="lg:col-span-7 bg-white border border-stone-200 rounded-3xl p-5">
+          <h3 class="text-xl font-bold mb-3">Admin Activity</h3>
+          <div id="activityPane" class="space-y-2 text-sm text-stone-700"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const USERS_KEY='psychemetrics_users_v1';
+    const SESSION_KEY='psychemetrics_auth_session_v1';
+    const ATTEMPTS_KEY='psychemetrics_test_attempts_v1';
+    const SUBMISSIONS_KEY='psychemetrics_hr_submissions_v1';
+    const ADMIN_EMAIL_KEY='psychemetrics_admin_notification_email';
+    const BATTERY_KEY='psychemetrics_battery_templates_v1';
+
+    const ASSESSMENTS = [
+      {label:'IPIP-NEO-120', path:'ipip-neo-120-assessment.html'},
+      {label:'Big Five (IPIP-50)', path:'big5-ipip50-assessment.html'},
+      {label:'General Self-Efficacy', path:'gse-assessment.html'},
+      {label:'Grit-S', path:'grit-s-assessment.html'},
+      {label:'UWES-9', path:'uwes9-assessment.html'}
+    ];
+
+    function seedUsers(){
+      const users=JSON.parse(localStorage.getItem(USERS_KEY)||'[]');
+      if(users.length) return;
+      localStorage.setItem(USERS_KEY, JSON.stringify([
+        {username:'admin',password:'admin123',name:'System Admin',role:'admin'},
+        {username:'hr',password:'hr123',name:'HR Manager',role:'hr'},
+        {username:'psych',password:'psych123',name:'Lead Psychologist',role:'psychologist'}
+      ]));
+    }
+
+    function openDashboard(session){
+      document.getElementById('authView').classList.add('hidden');
+      document.getElementById('dashboardView').classList.remove('hidden');
+      document.getElementById('profileMeta').textContent = `${session.name} · ${session.role.toUpperCase()} · ${session.username}`;
+
+      const attempts = JSON.parse(localStorage.getItem(ATTEMPTS_KEY)||'[]');
+      const subs = JSON.parse(localStorage.getItem(SUBMISSIONS_KEY)||'[]');
+      const reviewed = subs.filter(s => s.reviewed).length;
+      const pending = Math.max(0, subs.length - reviewed);
+
+      document.getElementById('kpiRow').innerHTML = `
+        <div class="bg-white border border-stone-200 rounded-2xl p-4"><p class="text-xs uppercase tracking-wide text-stone-500">Total Assessments</p><p class="text-2xl font-bold mt-1">${attempts.length}</p></div>
+        <div class="bg-white border border-stone-200 rounded-2xl p-4"><p class="text-xs uppercase tracking-wide text-stone-500">Inbox Total</p><p class="text-2xl font-bold mt-1">${subs.length}</p></div>
+        <div class="bg-white border border-amber-200 bg-amber-50 rounded-2xl p-4"><p class="text-xs uppercase tracking-wide text-amber-700">Pending Review</p><p class="text-2xl font-bold mt-1 text-amber-800">${pending}</p></div>
+        <div class="bg-white border border-emerald-200 bg-emerald-50 rounded-2xl p-4"><p class="text-xs uppercase tracking-wide text-emerald-700">Reviewed</p><p class="text-2xl font-bold mt-1 text-emerald-800">${reviewed}</p></div>
+      `;
+
+      document.getElementById('activityPane').innerHTML = `
+        <div class="rounded-xl border border-stone-200 p-3 bg-stone-50">
+          <p><strong>Workflow tip:</strong> Save your admin notification email first so links include automatic routing metadata.</p>
+        </div>
+        <div class="rounded-xl border border-stone-200 p-3">
+          <p class="font-semibold">Next recommended action</p>
+          <p class="text-stone-500 mt-1">Open the submission inbox to review pending assessments and add HR notes.</p>
+          <a class="inline-block mt-2 px-3 py-2 rounded-lg border border-stone-300" href="admin.html">Open Submission Inbox</a>
+        </div>
+      `;
+
+      const adminEmail = localStorage.getItem(ADMIN_EMAIL_KEY) || '';
+      document.getElementById('adminEmail').value = adminEmail;
+      renderLinks(adminEmail);
+    }
+
+    function renderLinks(adminEmail){
+      const base = `${location.origin}${location.pathname.replace('portal.html','')}`;
+      const wrap = document.getElementById('linkBuilder');
+      wrap.innerHTML = ASSESSMENTS.map(a => {
+        const url = `${base}${a.path}${adminEmail ? `?adminEmail=${encodeURIComponent(adminEmail)}` : ''}`;
+        return `<div class="rounded-xl border border-stone-200 p-3 hover:border-stone-400 transition">
+          <p class="font-medium">${a.label}</p>
+          <div class="mt-2 flex gap-2">
+            <button onclick="copyLink('${url}')" class="px-2 py-1 rounded border border-stone-300 text-xs">Copy link</button>
+            <a href="mailto:${encodeURIComponent(adminEmail)}?subject=${encodeURIComponent('PsycheMetrics Assessment Invitation: '+a.label)}&body=${encodeURIComponent([
+              'PsycheMetrics Assessment Invitation',
+              '================================',
+              '',
+              'Hello,',
+              '',
+              `You are invited to complete the following assessment: ${a.label}`,
+              '',
+              `Secure Assessment Link: ${url}`,
+              '',
+              'Please complete the required participant details before you begin the questionnaire.',
+              '',
+              'If you have any issues accessing the link, please contact our HR/Admin team.',
+              '',
+              'Best regards,',
+              'PsycheMetrics Assessment Team'
+            ].join('\n'))}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded border border-stone-300 text-xs">Email link</a>
+          </div>
+        </div>`;
+      }).join('');
+
+      const checkWrap = document.getElementById('batteryChecks');
+      checkWrap.innerHTML = ASSESSMENTS.map(a => `
+        <label class="flex items-center gap-2 rounded-lg border border-stone-200 px-2 py-1.5">
+          <input type="checkbox" value="${a.path}" class="battery-check" checked>
+          <span>${a.label}</span>
+        </label>
+      `).join('');
+    }
+
+    function copyLink(url){ navigator.clipboard.writeText(url); }
+
+    function login(e){
+      e.preventDefault();
+      const user=document.getElementById('loginUser').value.trim();
+      const pass=document.getElementById('loginPass').value;
+      const users=JSON.parse(localStorage.getItem(USERS_KEY)||'[]');
+      const found=users.find(u=>u.username===user && u.password===pass && ['admin','hr','psychologist'].includes(u.role));
+      if(!found){ document.getElementById('authMsg').textContent='Invalid administrator credentials'; return; }
+      const session={username:found.username,name:found.name,role:found.role};
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      openDashboard(session);
+    }
+
+    function logout(){ sessionStorage.removeItem(SESSION_KEY); location.reload(); }
+
+    seedUsers();
+    document.getElementById('loginForm').addEventListener('submit', login);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('saveEmailBtn').addEventListener('click', ()=>{
+      const email = document.getElementById('adminEmail').value.trim();
+      localStorage.setItem(ADMIN_EMAIL_KEY, email);
+      renderLinks(email);
+    });
+
+    function buildBatteryLink(){
+      const adminEmail = document.getElementById('adminEmail').value.trim();
+      const role = (document.getElementById('batteryRole').value.trim() || 'Custom Battery');
+      const tests = [...document.querySelectorAll('.battery-check:checked')].map(el => el.value);
+      if(!tests.length) return;
+      const id = `bat_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+      const templates = JSON.parse(localStorage.getItem(BATTERY_KEY) || '[]');
+      templates.unshift({ id, role, tests, adminEmail, createdAt: new Date().toISOString() });
+      localStorage.setItem(BATTERY_KEY, JSON.stringify(templates));
+
+      const base = `${location.origin}${location.pathname.replace('portal.html','')}`;
+      const url = `${base}battery.html?${new URLSearchParams({ batteryId:id, role, tests: tests.map(encodeURIComponent).join(','), adminEmail }).toString()}`;
+      document.getElementById('batteryLink').value = url;
+    }
+
+    document.getElementById('generateBatteryBtn').addEventListener('click', buildBatteryLink);
+    document.getElementById('copyBatteryBtn').addEventListener('click', ()=>{
+      const link = document.getElementById('batteryLink').value;
+      if(link) navigator.clipboard.writeText(link);
+    });
+
+    const existing=sessionStorage.getItem(SESSION_KEY);
+    if(existing){
+      try {
+        const parsed = JSON.parse(existing);
+        if(['admin','hr','psychologist'].includes(parsed.role)) openDashboard(parsed);
+      } catch(e) {}
+    }
+  </script>
+
+<script>
+(function enforceNewTabLinks(){
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) return;
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+})();
+</script>
+
+</body>
+</html>
