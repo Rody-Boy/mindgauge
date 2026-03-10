@@ -436,6 +436,7 @@ function calculateResults(){
   document.getElementById("results").classList.remove("hidden");
   recordAssessmentCompletion();
   submitToHRReview();
+  handleBatteryReturn();
   window.scrollTo({top:0,behavior:"smooth"});
 
   // Score each item
@@ -730,6 +731,34 @@ function submitToHRReview() {
     btn.textContent = delivered ? 'Results sent to admin' : 'Saved for admin review';
     setTimeout(() => btn.textContent = original, 1800);
   }
+}
+
+
+function handleBatteryReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const batteryId = params.get('batteryId');
+  if(!batteryId) return;
+
+  const stateKey = `psychemetrics_battery_state_${batteryId}`;
+  const currentPage = window.location.pathname.split('/').pop();
+  const state = JSON.parse(localStorage.getItem(stateKey) || '{}');
+  state[currentPage] = {
+    completedAt: new Date().toISOString(),
+    summary: getResultsSummaryText ? getResultsSummaryText() : ''
+  };
+  localStorage.setItem(stateKey, JSON.stringify(state));
+
+  const role = params.get('role') || 'Custom Role Battery';
+  const tests = params.get('tests') || '';
+  const adminEmail = params.get('adminEmail') || '';
+  const nextUrl = `battery.html?${new URLSearchParams({ batteryId, role, tests, adminEmail }).toString()}`;
+
+  const notice = document.createElement('div');
+  notice.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-stone-900 text-white text-sm px-4 py-2 rounded-xl shadow-lg z-[9999]';
+  notice.textContent = 'Marked complete in battery. Returning to Guided Battery...';
+  document.body.appendChild(notice);
+
+  setTimeout(() => { window.location.href = nextUrl; }, 1200);
 }
 
 function printResultsOnly() {

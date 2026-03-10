@@ -170,7 +170,7 @@
               '',
               'Best regards,',
               'PsycheMetrics Assessment Team'
-            ].join('\n'))}" class="px-2 py-1 rounded border border-stone-300 text-xs">Email link</a>
+            ].join('\n'))}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded border border-stone-300 text-xs">Email link</a>
           </div>
         </div>`;
       }).join('');
@@ -238,5 +238,17 @@
       } catch(e) {}
     }
   </script>
+
+<script>
+(function enforceNewTabLinks(){
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) return;
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+})();
+</script>
+
 </body>
 </html>

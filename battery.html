@@ -70,7 +70,7 @@ function render(){
         </div>
         <div class="flex gap-2">
           <button onclick="markDone('${path}')" class="px-3 py-1.5 text-xs rounded-lg border border-stone-300">Mark Complete</button>
-          <a href="${href}" class="px-3 py-1.5 text-xs rounded-lg bg-stone-900 text-white">Open Assessment</a>
+          <a href="${href}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs rounded-lg bg-stone-900 text-white">Open Assessment</a>
         </div>
       </div>
     </div>`;
@@ -84,5 +84,17 @@ function markDone(path){ state[path] = new Date().toISOString(); saveState(); re
 
 render();
 </script>
+
+<script>
+(function enforceNewTabLinks(){
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) return;
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+})();
+</script>
+
 </body>
 </html>

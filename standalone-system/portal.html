@@ -26,5 +26,17 @@
       <iframe src="../portal.html" title="PsycheMetrics Portal" class="w-full" style="height:calc(100vh - 130px);border:0;"></iframe>
     </div>
   </main>
+
+<script>
+(function enforceNewTabLinks(){
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) return;
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+})();
+</script>
+
 </body>
 </html>
