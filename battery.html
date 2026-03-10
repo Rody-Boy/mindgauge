@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PsycheMetrics Battery Runner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <style>body{font-family:'DM Sans',sans-serif;background:#faf9f6;color:#24231f}h1,h2,h3{font-family:'Fraunces',serif}</style>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-5xl mx-auto px-6 py-10 space-y-5">
+    <header class="bg-white border border-stone-200 rounded-3xl p-6">
+      <p class="text-xs uppercase tracking-[.2em] text-indigo-700 font-bold">Guided Battery</p>
+      <h1 class="text-3xl md:text-4xl font-bold mt-2">PsycheMetrics Assessment Battery</h1>
+      <p id="batteryMeta" class="text-stone-500 mt-2"></p>
+    </header>
+
+    <section class="bg-white border border-stone-200 rounded-3xl p-6">
+      <h2 class="text-xl font-bold mb-2">Before you begin</h2>
+      <p class="text-sm text-stone-600">Complete each assessment in order. Participant details are required at the start of each test and results are routed to the administrator inbox/email workflow.</p>
+    </section>
+
+    <section class="bg-white border border-stone-200 rounded-3xl p-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xl font-bold">Battery Checklist</h2>
+        <span id="progressText" class="text-xs px-3 py-1 rounded-full border border-stone-300">0 completed</span>
+      </div>
+      <div id="batteryList" class="space-y-3"></div>
+    </section>
+  </main>
+
+<script>
+const ASSESSMENT_MAP = {
+  'ipip-neo-120-assessment.html': 'IPIP-NEO-120',
+  'big5-ipip50-assessment.html': 'Big Five (IPIP-50)',
+  'gse-assessment.html': 'General Self-Efficacy',
+  'grit-s-assessment.html': 'Grit-S',
+  'uwes9-assessment.html': 'UWES-9'
+};
+
+const params = new URLSearchParams(location.search);
+const tests = (params.get('tests') || '').split(',').map(v => decodeURIComponent(v.trim())).filter(Boolean);
+const adminEmail = params.get('adminEmail') || '';
+const role = params.get('role') || 'Custom Role Battery';
+const batteryId = params.get('batteryId') || `adhoc_${Date.now()}`;
+const stateKey = `psychemetrics_battery_state_${batteryId}`;
+let state = JSON.parse(localStorage.getItem(stateKey) || '{}');
+
+if(!tests.length) {
+  document.getElementById('batteryMeta').textContent = 'No assessments configured. Please ask your administrator for a valid battery link.';
+} else {
+  document.getElementById('batteryMeta').textContent = `${role} · ${tests.length} assessments`;
+}
+
+function saveState(){ localStorage.setItem(stateKey, JSON.stringify(state)); }
+
+function render(){
+  const wrap = document.getElementById('batteryList');
+  wrap.innerHTML = tests.map((path, idx) => {
+    const done = !!state[path];
+    const href = `${path}?${new URLSearchParams({adminEmail, batteryId, role, tests: tests.join(','), step:String(idx+1), total:String(tests.length)}).toString()}`;
+    return `<div class="rounded-2xl border ${done?'border-emerald-300 bg-emerald-50':'border-stone-200 bg-white'} p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p class="text-xs text-stone-500">Step ${idx+1} of ${tests.length}</p>
+          <p class="font-semibold">${ASSESSMENT_MAP[path] || path}</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="markDone('${path}')" class="px-3 py-1.5 text-xs rounded-lg border border-stone-300">Mark Complete</button>
+          <a href="${href}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs rounded-lg bg-stone-900 text-white">Open Assessment</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('') || '<p class="text-sm text-stone-500">No assessments in this battery.</p>';
+
+  const doneCount = tests.filter(t => state[t]).length;
+  document.getElementById('progressText').textContent = `${doneCount}/${tests.length} completed`;
+}
+
+function markDone(path){ state[path] = new Date().toISOString(); saveState(); render(); }
+
+render();
+</script>
+
+<script>
+(function enforceNewTabLinks(){
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if(href.startsWith('#')) return;
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+})();
+</script>
+
+</body>
+</html>
